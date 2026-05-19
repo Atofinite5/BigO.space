@@ -1,0 +1,296 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum PlanTier {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+  EXPIRED
+}
+
+enum SessionType {
+  CALL
+  INTERVIEW
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// ─────────────────────────────────────────────
+// User
+// Mirror of Clerk user. Created on first login.
+// ─────────────────────────────────────────────
+
+model User {
+  id        String     @id @default(cuid())
+  clerkId   String     @unique
+  email     String     @unique
+  name      String?
+  avatarUrl String?
+  role      UserRole   @default(USER)
+  status    UserStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions     UserSubscription[]
+  sessions          AiSession[]
+  payments          Payment[]
+  auditLogs         AuditLog[]
+
+  @@index([clerkId])
+  @@index([email])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// SubscriptionPlan
+// Plan definitions managed by admin.
+// ─────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique // "Free", "Basic", "Pro", "Enterprise"
+  tier        PlanTier
+  description String?
+
+  priceMonthly Decimal @db.Decimal(10, 2)
+  priceAnnual  Decimal? @db.Decimal(10, 2)
+
+  // Quota per subscription period
+  totalSecondsAllowed   Int // e.g. 10800 = 3 hours
+  aiCallsAllowed        Int // Number of sessions allowed
+  maxConcurrentSessions Int @default(1)
+  validityDays          Int @default(30)
+
+  // Rate limits
+  rateLimitPerMinute Int @default(60)
+  rateLimitPerHour   Int @default(500)
+
+  // Feature flags (JSON for flexibility)
+  features Json?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions UserSubscription[]
+
+  @@index([tier])
+  @@index([isActive])
+}
+
+// ─────────────────────────────────────────────
+// UserSubscription
+// A user's active (or past) plan instance.
+// remainingSeconds is the single source of truth.
+// ─────────────────────────────────────────────
+
+model UserSubscription {
+  id     String             @id @default(cuid())
+  userId String
+  planId String
+  status SubscriptionStatus @default(ACTIVE)
+
+  // Live quota counters — decremented atomically
+  remainingSeconds Int // Remaining AI seconds
+  remainingCalls   Int // Remaining session count
+
+  startedAt   DateTime
+  expiresAt   DateTime
+  cancelledAt DateTime?
+
+  // Payment link (nullable for free plans)
+  paymentId String? @unique
+
+  // Provider subscription ID for recurring billing
+  providerSubscriptionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              SubscriptionPlan @relation(fields: [planId], references: [id])
+  payment           Payment?         @relation(fields: [paymentId], references: [id])
+  sessions          AiSession[]
+  usageTransactions UsageTransaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────────
+// AiSession
+// Each call or interview session.
+// Tracks time start/end and consumed quota.
+// ─────────────────────────────────────────────
+
+model AiSession {
+  id             String        @id @default(cuid())
+  userId         String
+  subscriptionId String
+  type           SessionType   @default(CALL)
+  status         SessionStatus @default(ACTIVE)
+
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  pausedAt        DateTime?
+  lastHeartbeatAt DateTime?
+
+  // Billing — updated atomically on every heartbeat
+  totalConsumedSeconds  Int @default(0)
+  pausedDurationSeconds Int @default(0)
+
+  // Client context
+  clientIp  String?
+  userAgent String?
+  deviceId  String?
+
+  // Flexible metadata: interview role, call topic, AI model used, etc.
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription      UserSubscription @relation(fields: [subscriptionId], references: [id])
+  usageTransactions UsageTransaction[]
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// ─────────────────────────────────────────────
+// Payment
+// Immutable payment records from any provider.
+// ─────────────────────────────────────────────
+
+model Payment {
+  id     String        @id @default(cuid())
+  userId String
+  planId String?
+  status PaymentStatus @default(PENDING)
+
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("USD")
+
+  provider          String // "stripe" | "razorpay"
+  providerPaymentId String  @unique // e.g. pi_xxx or pay_xxx
+  providerOrderId   String? // e.g. cs_xxx or order_xxx
+
+  // Idempotency key prevents double-activation on webhook retries
+  idempotencyKey String @unique @default(cuid())
+
+  // Full provider event payload for audit
+  metadata Json?
+
+  paidAt     DateTime?
+  failedAt   DateTime?
+  refundedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription UserSubscription?
+
+  @@index([userId])
+  @@index([status])
+  @@index([provider])
+  @@index([providerPaymentId])
+  @@index([idempotencyKey])
+}
+
+// ─────────────────────────────────────────────
+// UsageTransaction
+// Append-only ledger of every quota change.
+// Enables auditing and billing reconciliation.
+// ─────────────────────────────────────────────
+
+model UsageTransaction {
+  id             String @id @default(cuid())
+  subscriptionId String
+  sessionId      String
+
+  // Positive = deduction, negative = refund / admin grant
+  secondsDeducted Int
+  balanceBefore   Int
+  balanceAfter    Int
+
+  // Reason codes: "heartbeat" | "session_end" | "admin_grant" | "admin_deduct" | "refund"
+  reason String
+
+  createdAt DateTime @default(now())
+
+  subscription UserSubscription @relation(fields: [subscriptionId], references: [id])
+  session      AiSession        @relation(fields: [sessionId], references: [id])
+
+  @@index([subscriptionId])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// AuditLog
+// Records admin actions and critical system events.
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id         String  @id @default(cuid())
+  actorId    String? // Admin or system user ID
+  targetId   String? // ID of the affected entity
+  targetType String? // "User" | "UserSubscription" | "AiSession" | "Payment"
+  action     String  // e.g. "SUSPEND_USER", "GRANT_TIME", "ACTIVATE_PLAN"
+  metadata   Json?   // Before/after state or event payload
+  ipAddress  String?
+
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([action])
+  @@index([createdAt])
+}
