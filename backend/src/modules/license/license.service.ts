@@ -149,6 +149,56 @@ export const licenseService = {
     return { ok: true, solvesUsedToday: usedToday + 1, solvesLimit: FREE_DAILY_LIMIT, blocked: false };
   },
 
+  // ── Fetch by email ────────────────────────────────────────────────────────
+
+  async getLicenseByEmail(email: string) {
+    return prisma.license.findFirst({
+      where: { email, isActive: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
+
+  // ── Revoke ────────────────────────────────────────────────────────────────
+
+  async revoke(key: string): Promise<boolean> {
+    const result = await prisma.license.updateMany({
+      where: { key },
+      data: { isActive: false },
+    });
+    return result.count > 0;
+  },
+
+  async deactivateBySubscription(stripeSubscriptionId: string): Promise<void> {
+    await prisma.license.updateMany({
+      where: { paymentId: stripeSubscriptionId },
+      data: { isActive: false },
+    });
+  },
+
+  // ── Admin list ────────────────────────────────────────────────────────────
+
+  async adminList() {
+    const [licenses, totalCount, activeCount] = await Promise.all([
+      prisma.license.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+      }),
+      prisma.license.count(),
+      prisma.license.count({ where: { isActive: true } }),
+    ]);
+
+    const totalDevices = licenses.reduce((sum, l) => sum + l.activatedDevices.length, 0);
+
+    return {
+      licenses,
+      stats: {
+        totalLicenses: totalCount,
+        activeLicenses: activeCount,
+        totalDevices,
+      },
+    };
+  },
+
   // ── Create license on payment ─────────────────────────────────────────────
 
   async createLicenseForPayment(opts: {
@@ -156,6 +206,7 @@ export const licenseService = {
     plan: PlanTier;
     paymentId: string;
     expiresAt?: Date;
+    stripeSubscriptionId?: string;
   }): Promise<string> {
     const key = licenseService.generateKey();
     await prisma.license.create({
@@ -163,7 +214,8 @@ export const licenseService = {
         key,
         email: opts.email,
         plan: opts.plan,
-        paymentId: opts.paymentId,
+        // Store stripe subscription ID in paymentId field if no payment intent
+        paymentId: opts.stripeSubscriptionId ?? opts.paymentId,
         expiresAt: opts.expiresAt ?? null,
         maxDevices: 3,
       },

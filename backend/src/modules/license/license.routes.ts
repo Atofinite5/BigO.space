@@ -27,4 +27,16 @@ function requireInternalSecret(req: Request, res: Response, next: NextFunction) 
 // POST /api/licenses/create  — called by Stripe webhook after payment
 router.post('/create', requireInternalSecret, licenseController.create);
 
+// GET /api/licenses/by-email  — called by web dashboard to show user's license
+router.get('/by-email', requireInternalSecret, licenseController.getByEmail);
+
+// POST /api/licenses/revoke  — admin: deactivate a license
+router.post('/revoke', requireInternalSecret, licenseController.revoke);
+
+// POST /api/licenses/deactivate-by-subscription — called when Stripe sub cancelled
+router.post('/deactivate-by-subscription', requireInternalSecret, licenseController.deactivateBySubscription);
+
+// GET /api/licenses/admin/list  — admin: list all licenses with stats
+router.get('/admin/list', requireInternalSecret, licenseController.adminList);
+
 export default router;
