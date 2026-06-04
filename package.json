@@ -1,0 +1,24 @@
+{
+  "name": "bigo-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BigO — AI interview assistant. Monorepo for Electron app, web frontend, and backend API.",
+  "workspaces": [
+    "apps/electron",
+    "apps/web",
+    "backend"
+  ],
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:electron": "cd apps/electron && npm run dev",
+    "build:backend": "cd backend && npm run build",
+    "build:web": "cd apps/web && npm run build",
+    "build:electron": "cd apps/electron && npm run build",
+    "docker:up": "cd backend && docker-compose up -d",
+    "docker:down": "cd backend && docker-compose down"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

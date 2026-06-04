@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+dist-electron/
+build/
+.next/
+out/
+
+# Electron release artifacts
+apps/electron/release/
+apps/electron/dist/
+apps/electron/dist-electron/
+*.dmg
+*.zip
+*.AppImage
+*.exe
+*.deb
+*.rpm
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pino-*.log
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma
+backend/prisma/migrations/
+
+# Cache
+.eslintcache
+.parcel-cache
+.turbo/
+
+# Testing
+coverage/
+
+# Misc
+*.pem

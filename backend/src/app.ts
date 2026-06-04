@@ -62,7 +62,7 @@ app.use(globalIpRateLimiter);
 app.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
-    service: 'call-assistant-backend',
+    service: 'bigo-backend',
     timestamp: new Date().toISOString(),
     env: env.NODE_ENV,
   });

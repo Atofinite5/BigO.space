@@ -1,5 +1,5 @@
 {
-  "name": "call-assistant-backend",
+  "name": "@bigo/backend",
   "version": "1.0.0",
   "description": "AI Call & Interview Assistant — Production Backend",
   "main": "dist/server.js",

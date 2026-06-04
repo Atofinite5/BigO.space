@@ -1,0 +1,898 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   QuQ — glassy theme with strong text contrast.
+   Light mode  → light frosted glass · BLACK text  (default)
+   Dark  mode  → dark  frosted glass · WHITE text  (Cmd+P)
+   The Electron BrowserWindow itself is fully transparent, so only the
+   .answer-card paints visible UI.
+   ========================================================================== */
+:root {
+  --qq-text:        #0F0F12;
+  --qq-text-2:      #4A4A52;
+  --qq-bg:          rgba(255, 255, 255, 0.82);
+  --qq-border:      rgba(0, 0, 0, 0.10);
+  --qq-inner-edge:  rgba(255, 255, 255, 0.85);
+  --qq-shadow:      none;                                 /* no drop-shadow on light card */
+  --qq-code-bg:     rgba(255, 255, 255, 0.55);
+  --qq-code-border: rgba(0, 0, 0, 0.08);
+  --qq-hl-yellow:   rgba(255, 235, 130, 0.55);
+  --qq-hl-green:    rgba(255, 230, 130, 0.50);
+  --qq-ping-bg:     rgba(255, 230, 130, 0.50);
+  --qq-ping-border: rgba(0, 0, 0, 0.18);
+  --qq-radius:      12px;
+  --qq-blur:        blur(28px) saturate(180%);
+  --qq-font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+             system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+html[data-theme="dark"] {
+  --qq-text:        #F5F5F8;
+  --qq-text-2:      #B8B8C0;
+  /* More hidden: lower bg opacity so the dark theme blends with whatever's
+     behind the window. Combined with backdrop blur, it's nearly invisible
+     until you actually look at it. */
+  --qq-bg:          rgba(10, 10, 14, 0.42);
+  --qq-border:      rgba(255, 255, 255, 0.08);
+  --qq-inner-edge:  rgba(255, 255, 255, 0.06);
+  --qq-shadow:      none;
+  --qq-code-bg:     rgba(0, 0, 0, 0.30);
+  --qq-code-border: rgba(255, 255, 255, 0.06);
+  --qq-hl-yellow:   rgba(255, 235, 130, 0.25);
+  --qq-hl-green:    rgba(255, 230, 130, 0.25);
+  --qq-ping-bg:     rgba(255, 255, 255, 0.10);
+  --qq-ping-border: rgba(255, 255, 255, 0.18);
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--qq-text);
+  font-family: var(--qq-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --------------------------------------------------------------------------
+   The single answer card. Frosted glass with strong-contrast text.
+   -------------------------------------------------------------------------- */
+.answer-card {
+  position: relative;
+  display: block;                       /* simple block — flex was causing height ambiguity */
+  max-width: 720px;
+  min-width: 320px;
+  margin: 12px;
+  background: var(--qq-bg);
+  backdrop-filter: var(--qq-blur);
+  -webkit-backdrop-filter: var(--qq-blur);
+  border: 1px solid var(--qq-border);
+  border-radius: var(--qq-radius);
+  box-shadow: var(--qq-shadow), inset 0 1px 0 var(--qq-inner-edge);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--qq-text);
+  overflow: hidden;                     /* outer clips so border-radius is preserved */
+}
+
+/* Scrollable inner region. Hard cap on max-height (using clamp so it adapts
+   to small windows but never exceeds 600px on large ones). The body is
+   what scrolls — the card itself just wraps. */
+.answer-card__body {
+  max-height: clamp(280px, 70vh, 600px);
+  overflow-y: scroll;                   /* always show scrollbar — affordance for the user */
+  overflow-x: hidden;
+  padding: 16px 18px 44px;              /* bottom padding so Copy button doesn't cover content */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.answer-card__body::-webkit-scrollbar { width: 10px; }
+.answer-card__body::-webkit-scrollbar-track { background: transparent; }
+.answer-card__body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.answer-card__body::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.50); background-clip: padding-box; }
+html[data-theme="dark"] .answer-card__body { scrollbar-color: rgba(255,255,255,0.35) transparent; }
+html[data-theme="dark"] .answer-card__body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.30); background-clip: padding-box; }
+html[data-theme="dark"] .answer-card__body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.50); background-clip: padding-box; }
+
+/* Prose mode — used for Subjective (theory/essay) answers. Plain readable
+   text with preserved line breaks, no syntax highlighter. */
+.answer-card__prose {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--qq-font);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--qq-text);
+  margin-top: 4px;
+}
+
+/* Complexity / metadata pings — top-right of the card, soft green */
+.answer-card__pings {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+.answer-card__ping {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--qq-ping-bg);
+  color: var(--qq-text);
+  border: 1px solid var(--qq-ping-border);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Thoughts list — high-contrast secondary text */
+.answer-card__thoughts {
+  margin: 0 0 12px 0;
+  padding: 0;
+  list-style: none;
+}
+.answer-card__thoughts li {
+  position: relative;
+  padding-left: 14px;
+  margin-bottom: 6px;
+  color: var(--qq-text-2);
+  line-height: 1.6;
+}
+.answer-card__thoughts li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+/* Numbered steps — shown below the code block */
+.answer-card__steps {
+  margin: 10px 0 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: steps;
+}
+.answer-card__steps li {
+  position: relative;
+  padding-left: 22px;
+  margin-bottom: 5px;
+  color: var(--qq-text-2);
+  font-size: 12px;
+  line-height: 1.55;
+  counter-increment: steps;
+}
+.answer-card__steps li::before {
+  content: counter(steps);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--qq-ping-bg);
+  border: 1px solid var(--qq-ping-border);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--qq-text);
+  line-height: 1;
+  text-align: center;
+}
+
+/* Section label above alternative approaches */
+.answer-card__section-label {
+  margin: 10px 0 4px 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qq-text-2);
+  opacity: 0.7;
+}
+
+/* Conclusion / Summary block */
+.answer-card__conclusion {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--qq-ping-border);
+  background: rgba(255,255,255,0.04);
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--qq-text);
+  font-style: italic;
+}
+
+/* Inline highlights */
+mark, .hl-yellow {
+  background: var(--qq-hl-yellow);
+  color: var(--qq-text);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+.hl-green {
+  background: var(--qq-hl-green);
+  color: var(--qq-text);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+/* Code area — frosted panel inside the card, monospace, contrast-correct. */
+.answer-card__code {
+  position: relative;
+  margin: 6px 0 0;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+  border: 1px solid var(--qq-code-border);
+  background: var(--qq-code-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.answer-card__code pre,
+.answer-card__code code {
+  background: transparent !important;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  line-height: 1.55;
+  color: var(--qq-text);
+}
+/* Force syntax-highlighter tokens to inherit the theme text color in dark mode
+   (oneLight tokens are dark and unreadable on a dark glass background). */
+html[data-theme="dark"] .answer-card__code pre,
+html[data-theme="dark"] .answer-card__code code,
+html[data-theme="dark"] .answer-card__code span {
+  color: var(--qq-text) !important;
+  text-shadow: none !important;
+}
+
+/* Copy button — pinned to the bottom-right of the card. Stays visible even
+   while the body scrolls so the user can grab the answer at any time. */
+/* From-memory badge */
+.answer-card__ping--memory {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+}
+
+/* Bottom action bar: like/dislike + copy */
+.answer-card__actions {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Like / dislike buttons */
+.answer-card__like {
+  font-size: 13px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--qq-bg);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--qq-border);
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  opacity: 0.55;
+}
+.answer-card__like:hover { opacity: 1; transform: scale(1.08); }
+.answer-card__like--active { background: rgba(134, 239, 172, 0.25); border-color: rgba(134, 239, 172, 0.5); opacity: 1; }
+.answer-card__like--bad    { background: rgba(252, 165, 165, 0.25); border-color: rgba(252, 165, 165, 0.5); opacity: 1; }
+
+.answer-card__copy {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--qq-bg);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  color: var(--qq-text);
+  border: 1px solid var(--qq-border);
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.answer-card__copy:hover:not(:disabled) { background: var(--qq-hl-yellow); }
+.answer-card__copy:active:not(:disabled) { transform: scale(0.97); }
+.answer-card__copy:disabled { opacity: 0.45; cursor: not-allowed; }
+.answer-card__copy--success { background: var(--qq-hl-green); }
+
+.answer-card__loading {
+  font-size: 12px;
+  color: var(--qq-text-2);
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Override layer for legacy components still using Tailwind dark classes.
+   In LIGHT theme (default): map them to the frosted-light palette.
+   In DARK theme: leave them mostly alone.
+   -------------------------------------------------------------------------- */
+html:not([data-theme="dark"]) .bg-black,
+html:not([data-theme="dark"]) .bg-black\/30,
+html:not([data-theme="dark"]) .bg-black\/40,
+html:not([data-theme="dark"]) .bg-black\/50,
+html:not([data-theme="dark"]) .bg-black\/55,
+html:not([data-theme="dark"]) .bg-black\/60,
+html:not([data-theme="dark"]) .bg-black\/70,
+html:not([data-theme="dark"]) .bg-black\/80,
+html:not([data-theme="dark"]) .bg-black\/90 {
+  background-color: var(--qq-bg) !important;
+  backdrop-filter: var(--qq-blur) !important;
+  -webkit-backdrop-filter: var(--qq-blur) !important;
+}
+html:not([data-theme="dark"]) .bg-white\/5,
+html:not([data-theme="dark"]) .bg-white\/10,
+html:not([data-theme="dark"]) .bg-white\/15,
+html:not([data-theme="dark"]) .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+html:not([data-theme="dark"]) .text-white,
+html:not([data-theme="dark"]) .text-white\/40,
+html:not([data-theme="dark"]) .text-white\/50,
+html:not([data-theme="dark"]) .text-white\/60,
+html:not([data-theme="dark"]) .text-white\/70,
+html:not([data-theme="dark"]) .text-white\/80,
+html:not([data-theme="dark"]) .text-white\/90 {
+  color: var(--qq-text) !important;
+}
+html:not([data-theme="dark"]) .border-white\/5,
+html:not([data-theme="dark"]) .border-white\/10,
+html:not([data-theme="dark"]) .border-white\/15,
+html:not([data-theme="dark"]) .border-white\/20,
+html:not([data-theme="dark"]) .border-white\/30 {
+  border-color: var(--qq-border) !important;
+}
+
+/* Native form controls */
+select {
+  appearance: menulist;
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--qq-text) !important;
+  border: 1px solid var(--qq-border);
+  border-radius: 6px;
+}
+option {
+  background-color: #FFFFFF !important;
+  color: var(--qq-text) !important;
+  padding: 8px !important;
+}
+html[data-theme="dark"] select {
+  background-color: rgba(30, 30, 35, 0.9) !important;
+  color: var(--qq-text) !important;
+  border-color: var(--qq-border);
+}
+html[data-theme="dark"] option {
+  background-color: #1A1A1F !important;
+  color: var(--qq-text) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Misc legacy bits.
+   -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -48%); }
+  to   { opacity: 0.98; transform: translate(-50%, -50%); }
+}
+.settings-dialog {
+  transform-origin: center;
+  backface-visibility: hidden;
+  will-change: opacity, transform;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.40) rgba(255, 255, 255, 0.04);
+}
+.settings-dialog::-webkit-scrollbar { width: 10px; -webkit-appearance: none; }
+.settings-dialog::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+}
+.settings-dialog::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 5px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  min-height: 32px;
+}
+.settings-dialog::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.65);
+  background-clip: padding-box;
+}
+.frosted-glass {
+  background: var(--qq-bg);
+  backdrop-filter: var(--qq-blur);
+  -webkit-backdrop-filter: var(--qq-blur);
+}
+.auth-button {
+  background: var(--qq-bg);
+  color: var(--qq-text);
+  border: 1px solid var(--qq-border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.auth-button:hover { background: var(--qq-hl-yellow); }
+
+/* --------------------------------------------------------------------------
+   Yen — black-box bucket panel (Cmd+P+0). Lives on top of the regular
+   queue/solutions card while open. Always dark, regardless of theme.
+   -------------------------------------------------------------------------- */
+.yen-card {
+  background: rgba(8, 8, 12, 0.92) !important;
+  color: #F5F5F8;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  max-width: min(940px, calc(100vw - 24px));
+  min-width: min(420px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.yen-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.yen-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.yen-card__subtle {
+  font-weight: 400;
+  font-size: 11px;
+  color: rgba(245, 245, 248, 0.55);
+  margin-left: 4px;
+}
+.yen-card__capture-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: rgba(245, 245, 248, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.yen-card__capture-status kbd {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  color: #F5F5F8;
+}
+.yen-card__capture-status--muted { color: rgba(245, 245, 248, 0.5); }
+.yen-card__chevron {
+  display: inline-block;
+  margin-right: 8px;
+  color: rgba(245, 245, 248, 0.55);
+  font-weight: 600;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.yen-card__minor-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(245, 245, 248, 0.85);
+  font-size: 10.5px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.yen-card__minor-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+/* --- horizontal bucket rail ------------------------------------------ */
+.yen-card__rail {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.30) transparent;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.yen-card__rail::-webkit-scrollbar { height: 10px; -webkit-appearance: none; }
+.yen-card__rail::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+}
+.yen-card__rail::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 5px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  min-width: 32px;
+}
+.yen-card__rail::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.65); background-clip: padding-box; }
+
+.yen-bucket {
+  flex: 0 0 min(360px, calc(100vw - 60px));
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  /* Definite, predictable height — content area scrolls inside this card.
+     Card stays "fix fix"; long summaries scroll within. */
+  height: clamp(320px, calc(100vh - 130px), 560px);
+  background: #050507;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 12px 10px;
+  /* Hard clip so the inner scrollbar can't bleed past the rounded corner.
+     Without this, very long Groq responses paint a vertical scrollbar that
+     renders outside the bucket border. */
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+.yen-bucket--active {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.30), 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.yen-bucket--empty {
+  background: rgba(255, 255, 255, 0.02);
+  border-style: dashed;
+  cursor: pointer;
+}
+.yen-bucket--empty:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.yen-bucket__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: rgba(245, 245, 248, 0.55);
+  flex-shrink: 0;
+}
+.yen-bucket__id { font-weight: 700; color: rgba(245, 245, 248, 0.85); letter-spacing: 0.04em; }
+.yen-bucket__meta { font-size: 10px; }
+
+/* Sticky action strip — sits above the scroll area so Copy code / Copy
+   all / Delete are reachable in one click even when the response is long
+   enough to require scrolling. */
+.yen-bucket__topbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* The single scrollable body. Owns ALL vertical overflow inside the
+   bucket — long Groq responses scroll here, the bucket card itself stays
+   fixed-size. min-height:0 is required so flex doesn't inflate to fit
+   content. No max-height hack — the bucket has overflow:hidden so this
+   one rule is the source of truth. */
+.yen-bucket__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: scroll;             /* always show — affordance + works on long responses */
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;             /* keep scrollbar off the text */
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.30) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.yen-bucket__scroll::-webkit-scrollbar { width: 10px; -webkit-appearance: none; }
+.yen-bucket__scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 5px;
+}
+.yen-bucket__scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 5px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  min-height: 32px;
+}
+.yen-bucket__scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.65); background-clip: padding-box; }
+
+/* Plain pre block for the non-code parts of the response (Topic,
+   Question, Approaches, Explanation, Key Points). */
+.yen-bucket__text {
+  margin: 0;
+  padding: 10px 12px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--qq-font);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #F5F5F8;
+  flex-shrink: 0;
+}
+.yen-bucket__text--summary {
+  /* The post-code block contains Approaches + Explanation + Key Points.
+     Tint it so the user sees it as the summary, separate from the code. */
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* The dedicated code card — its own bordered box with a header bar and
+   a sticky Copy-code button. Nested inside __scroll so it scrolls with
+   surrounding text rather than fighting it. */
+.yen-bucket__code {
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: #000;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.yen-bucket__code-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 8px 5px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 248, 0.55);
+}
+.yen-bucket__code-lang {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 600;
+}
+.yen-bucket__code-copy {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.10);
+  color: #F5F5F8;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  transition: background 120ms ease, transform 80ms ease;
+}
+.yen-bucket__code-copy:hover { background: rgba(255, 255, 255, 0.22); }
+.yen-bucket__code-copy:active { transform: scale(0.97); }
+.yen-bucket__code-pre {
+  margin: 0;
+  padding: 10px 12px;
+  white-space: pre;                /* keep code formatting; horizontal scroll if too wide */
+  overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #F5F5F8;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.30) transparent;
+}
+.yen-bucket__code-pre::-webkit-scrollbar { height: 8px; -webkit-appearance: none; }
+.yen-bucket__code-pre::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.30);
+  border-radius: 4px;
+  background-clip: padding-box;
+}
+
+.yen-bucket__btn {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #F5F5F8;
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease;
+}
+.yen-bucket__btn:hover { background: rgba(255, 255, 255, 0.12); }
+.yen-bucket__btn:active { transform: scale(0.97); }
+.yen-bucket__btn--primary {
+  background: #fff;
+  color: #0F0F12;
+  border-color: #fff;
+}
+.yen-bucket__btn--primary:hover { background: #E5E7EB; }
+.yen-bucket__btn--danger {
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #FCA5A5;
+  background: rgba(248, 113, 113, 0.10);
+}
+.yen-bucket__btn--danger:hover { background: rgba(248, 113, 113, 0.20); }
+
+.yen-bucket__empty-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgba(245, 245, 248, 0.40);
+  font-size: 12px;
+  gap: 6px;
+}
+.yen-bucket__empty-body p { margin: 0; }
+.yen-bucket__empty-hint { font-size: 10.5px; color: rgba(245, 245, 248, 0.30); max-width: 220px; line-height: 1.5; }
+
+/* --- light-theme variants for the Yen panel -------------------------- */
+/* Without these, the panel stays dark even when Cmd+P flips data-theme,
+   making the toggle look broken while bucket mode is open. */
+html:not([data-theme="dark"]) .yen-card {
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #14141A;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+html:not([data-theme="dark"]) .yen-card__header,
+html:not([data-theme="dark"]) .yen-card__capture-bar {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+html:not([data-theme="dark"]) .yen-card__title { color: #14141A; }
+html:not([data-theme="dark"]) .yen-card__subtle { color: rgba(20, 20, 26, 0.55); }
+html:not([data-theme="dark"]) .yen-card__capture-status { color: rgba(20, 20, 26, 0.75); }
+html:not([data-theme="dark"]) .yen-card__capture-status--muted { color: rgba(20, 20, 26, 0.55); }
+html:not([data-theme="dark"]) .yen-card__capture-status kbd {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #14141A;
+}
+html:not([data-theme="dark"]) .yen-card__chevron { color: rgba(20, 20, 26, 0.55); }
+html:not([data-theme="dark"]) .yen-card__minor-btn {
+  border-color: rgba(0, 0, 0, 0.18);
+  color: rgba(20, 20, 26, 0.85);
+}
+html:not([data-theme="dark"]) .yen-card__minor-btn:hover { background: rgba(0, 0, 0, 0.06); }
+
+html:not([data-theme="dark"]) .yen-card__rail { scrollbar-color: rgba(0, 0, 0, 0.30) transparent; }
+html:not([data-theme="dark"]) .yen-card__rail::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.04); }
+html:not([data-theme="dark"]) .yen-card__rail::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.30); background-clip: padding-box; }
+html:not([data-theme="dark"]) .yen-card__rail::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.55); background-clip: padding-box; }
+
+html:not([data-theme="dark"]) .yen-bucket {
+  background: #F7F7FB;
+  border-color: rgba(0, 0, 0, 0.10);
+}
+html:not([data-theme="dark"]) .yen-bucket--active {
+  border-color: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.30), 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+html:not([data-theme="dark"]) .yen-bucket--empty {
+  background: rgba(0, 0, 0, 0.02);
+}
+html:not([data-theme="dark"]) .yen-bucket--empty:hover {
+  border-color: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.04);
+}
+html:not([data-theme="dark"]) .yen-bucket__header { color: rgba(20, 20, 26, 0.55); }
+html:not([data-theme="dark"]) .yen-bucket__id { color: rgba(20, 20, 26, 0.85); }
+html:not([data-theme="dark"]) .yen-bucket__scroll {
+  scrollbar-color: rgba(0, 0, 0, 0.30) transparent;
+}
+html:not([data-theme="dark"]) .yen-bucket__scroll::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.04); }
+html:not([data-theme="dark"]) .yen-bucket__scroll::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.30); background-clip: padding-box; }
+html:not([data-theme="dark"]) .yen-bucket__scroll::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.55); background-clip: padding-box; }
+
+html:not([data-theme="dark"]) .yen-bucket__text {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #14141A;
+}
+html:not([data-theme="dark"]) .yen-bucket__text--summary {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+html:not([data-theme="dark"]) .yen-bucket__code {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+html:not([data-theme="dark"]) .yen-bucket__code-bar {
+  background: rgba(0, 0, 0, 0.04);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+  color: rgba(20, 20, 26, 0.55);
+}
+html:not([data-theme="dark"]) .yen-bucket__code-pre {
+  color: #14141A;
+  scrollbar-color: rgba(0, 0, 0, 0.30) transparent;
+}
+html:not([data-theme="dark"]) .yen-bucket__code-copy {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #14141A;
+}
+html:not([data-theme="dark"]) .yen-bucket__code-copy:hover { background: rgba(0, 0, 0, 0.12); }
+html:not([data-theme="dark"]) .yen-bucket__btn {
+  border-color: rgba(0, 0, 0, 0.18);
+  color: rgba(20, 20, 26, 0.85);
+  background: rgba(0, 0, 0, 0.02);
+}
+html:not([data-theme="dark"]) .yen-bucket__btn:hover { background: rgba(0, 0, 0, 0.08); }
+html:not([data-theme="dark"]) .yen-bucket__btn--primary {
+  background: #14141A;
+  color: #FFFFFF;
+  border-color: transparent;
+}
+html:not([data-theme="dark"]) .yen-bucket__btn--primary:hover { background: #2A2A35; }
+html:not([data-theme="dark"]) .yen-bucket__btn--danger {
+  border-color: rgba(220, 38, 38, 0.45);
+  color: #B91C1C;
+  background: rgba(220, 38, 38, 0.06);
+}
+html:not([data-theme="dark"]) .yen-bucket__btn--danger:hover { background: rgba(220, 38, 38, 0.14); }
+html:not([data-theme="dark"]) .yen-bucket__empty-body { color: rgba(20, 20, 26, 0.45); }
+html:not([data-theme="dark"]) .yen-bucket__empty-hint { color: rgba(20, 20, 26, 0.40); }
+
+/* --- fixed corner settings gear ------------------------------------- */
+.yen-corner-gear {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--qq-border);
+  background: var(--qq-bg);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  color: var(--qq-text);
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease, border-color 120ms ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.yen-corner-gear:hover {
+  background: var(--qq-hl-yellow);
+  transform: rotate(30deg);
+  border-color: rgba(0, 0, 0, 0.20);
+}
+html[data-theme="dark"] .yen-corner-gear:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.20);
+}
+.yen-corner-gear:active { transform: rotate(30deg) scale(0.92); }

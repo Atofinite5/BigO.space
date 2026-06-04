@@ -3,7 +3,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: call-assistant-postgres
+    container_name: bigo-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: callassistant
@@ -21,7 +21,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: call-assistant-redis
+    container_name: bigo-redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:

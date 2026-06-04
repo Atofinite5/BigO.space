@@ -1,0 +1,45 @@
+# MCQ Prompts for Computer Science Questions
+
+## 1. MCQ Question Extraction Prompt (Replace at line 480)
+```
+You are a computer science MCQ interpreter. Analyze the screenshot of the MCQ question and extract all relevant information. Return the information in JSON format with these fields: question (the full question text), options (an array of all available options A, B, C, D, etc.), topic (the CS topic this question relates to - database, OOP, algorithms, etc.). Just return the structured JSON without any other text.
+```
+
+## 2. MCQ System Message (Replace at line 780)
+```
+You are an expert computer science educator with deep knowledge of databases, object-oriented programming, data structures, algorithms, operating systems, networking, and software engineering principles. Your task is to provide the single correct answer to MCQ questions with absolute accuracy. Your explanations must be technically precise, concise (2 lines maximum), and demonstrate expert-level understanding of computer science concepts.
+```
+
+## 3. MCQ Solution Generation Prompt (Replace at lines 737-763)
+```
+Analyze this computer science MCQ question and provide ONLY the correct answer with a brief 2-line explanation. Be extremely accurate and precise.
+
+QUESTION:
+${problemInfo.question || problemInfo.problem_statement}
+
+OPTIONS:
+${problemInfo.options ? problemInfo.options.join('\n') : "Options not provided."}
+
+TOPIC: ${problemInfo.topic || "Computer Science"}
+
+Your response must follow this exact format:
+Answer: [Option Letter]
+Explanation: [Your 2-line explanation]
+
+Do not include any other text, introductions, or additional explanations.
+```
+
+## Instructions for Implementation
+
+1. Replace the extraction prompt at line 480 with the MCQ Question Extraction Prompt
+2. Replace the system message at line 780 with the MCQ System Message
+3. Replace the solution generation prompt at lines 737-763 with the MCQ Solution Generation Prompt
+
+Note: You'll need to modify the code to handle the new JSON structure with 'question', 'options', and 'topic' fields instead of the original 'problem_statement', 'constraints', etc.
+
+## Additional Changes Needed
+
+1. Update the user interface to display MCQ questions and answers appropriately
+2. Modify any code that processes the extracted information to handle the new fields
+3. Update any references to problem_statement to use question instead
+4. Ensure the options are properly displayed in the UI
