@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'BigO — Invisible AI for Technical Interviews',
     description: 'Solve any coding problem invisibly during your interview.',
-    url: 'https://getbigo.app',
+    url: 'https://bigo.space',
     siteName: 'BigO',
     type: 'website',
   },

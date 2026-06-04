@@ -12,7 +12,7 @@ export function Footer() {
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
           <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
-          <a href="mailto:support@getbigo.app" className="hover:text-white transition-colors">Support</a>
+          <a href="mailto:support@bigo.space" className="hover:text-white transition-colors">Support</a>
         </nav>
       </div>
     </footer>

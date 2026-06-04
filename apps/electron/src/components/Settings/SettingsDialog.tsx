@@ -546,7 +546,7 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                 </div>
                 <button
                   type="button"
-                  onClick={() => openExternalLink("https://getbigo.app/pricing")}
+                  onClick={() => openExternalLink("https://bigo.space/pricing")}
                   className="text-xs text-blue-400 hover:underline"
                 >
                   Don&apos;t have a key? Get Pro →

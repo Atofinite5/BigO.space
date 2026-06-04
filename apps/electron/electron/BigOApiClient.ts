@@ -10,7 +10,7 @@ import { configHelper } from './ConfigHelper'
 const API_BASE =
   process.env.BIGO_API_URL ||
   (process.env.NODE_ENV === 'production'
-    ? 'https://api.getbigo.app'   // TODO: replace with real prod URL
+    ? 'https://api.bigo.space'   // TODO: replace with real prod URL
     : 'http://localhost:3000')
 
 // ── Types ────────────────────────────────────────────────────────────────────

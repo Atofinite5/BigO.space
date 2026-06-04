@@ -33,7 +33,7 @@ export default function CheckoutSuccessPage() {
 
       <p className="mt-8 text-xs text-white/25">
         Didn&apos;t get the email? Check spam or{' '}
-        <a href="mailto:support@getbigo.app" className="underline hover:text-white/50">
+        <a href="mailto:support@bigo.space" className="underline hover:text-white/50">
           contact support
         </a>
       </p>

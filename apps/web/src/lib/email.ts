@@ -11,7 +11,7 @@ export async function sendLicenseEmail(opts: {
   const { to, licenseKey, plan, annual } = opts
 
   await resend.emails.send({
-    from: 'BigO <noreply@getbigo.app>',
+    from: 'BigO <noreply@bigo.space>',
     to,
     subject: '🎉 Your BigO license key',
     html: `
@@ -51,7 +51,7 @@ export async function sendLicenseEmail(opts: {
 
     <p style="color:rgba(255,255,255,0.2);font-size:12px;margin-top:32px">
       Works on up to 3 devices. Manage your license at
-      <a href="https://getbigo.app/dashboard" style="color:rgba(255,255,255,0.4)">getbigo.app/dashboard</a>.
+      <a href="https://bigo.space/dashboard" style="color:rgba(255,255,255,0.4)">bigo.space/dashboard</a>.
       Questions? Reply to this email.
     </p>
   </div>

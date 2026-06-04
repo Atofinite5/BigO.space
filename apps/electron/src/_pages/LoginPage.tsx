@@ -42,7 +42,7 @@ export default function LoginPage({ onValidKey }: LoginPageProps) {
   }
 
   function handleOpenPurchase() {
-    window.electronAPI.openExternalUrl("https://getbigo.app/pricing")
+    window.electronAPI.openExternalUrl("https://bigo.space/pricing")
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

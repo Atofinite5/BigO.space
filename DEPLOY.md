@@ -3,8 +3,8 @@
 ## Architecture
 
 ```
-getbigo.app        → Vercel        (apps/web — Next.js)
-api.getbigo.app    → Railway       (backend — Express)
+bigo.space        → Vercel        (apps/web — Next.js)
+api.bigo.space    → Railway       (backend — Express)
 BigO.dmg           → GitHub Releases (apps/electron — Electron)
 ```
 
@@ -26,7 +26,7 @@ BigO.dmg           → GitHub Releases (apps/electron — Electron)
 
 1. Create project → **Next.js**
 2. Copy `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`
-3. Add allowed redirect URLs: `https://getbigo.app`, `http://localhost:3001`
+3. Add allowed redirect URLs: `https://bigo.space`, `http://localhost:3001`
 
 ---
 
@@ -38,7 +38,7 @@ BigO.dmg           → GitHub Releases (apps/electron — Electron)
 2. Enable **Customer Portal** → Stripe Dashboard → Billing → Customer portal → Activate
 3. Copy API keys: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 4. Set up webhook (after deploy):
-   - Endpoint: `https://getbigo.app/api/webhooks/stripe`
+   - Endpoint: `https://bigo.space/api/webhooks/stripe`
    - Events: `checkout.session.completed`, `customer.subscription.deleted`
    - Copy `STRIPE_WEBHOOK_SECRET`
 
@@ -47,7 +47,7 @@ BigO.dmg           → GitHub Releases (apps/electron — Electron)
 ## 4. Resend setup
 
 1. Create account at resend.com
-2. Add domain → verify `getbigo.app` DNS records
+2. Add domain → verify `bigo.space` DNS records
 3. Copy `RESEND_API_KEY`
 
 ---
@@ -84,7 +84,7 @@ RAZORPAY_WEBHOOK_SECRET=xxx
 INTERNAL_API_SECRET=<generated above>
 ```
 
-7. Set custom domain: `api.getbigo.app` → point to Railway service
+7. Set custom domain: `api.bigo.space` → point to Railway service
 
 ---
 
@@ -109,8 +109,8 @@ Or via Vercel Dashboard:
 4. Add all env vars from `apps/web/.env.example`:
 
 ```
-NEXT_PUBLIC_APP_URL=https://getbigo.app
-BIGO_API_URL=https://api.getbigo.app
+NEXT_PUBLIC_APP_URL=https://bigo.space
+BIGO_API_URL=https://api.bigo.space
 INTERNAL_API_SECRET=<same as backend>
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_xxx
 CLERK_SECRET_KEY=sk_live_xxx
@@ -123,13 +123,13 @@ RESEND_API_KEY=re_xxx
 ADMIN_EMAILS=bhargavkalambhe3@gmail.com
 ```
 
-5. Set custom domain: `getbigo.app`
+5. Set custom domain: `bigo.space`
 
 ### Branch → environment mapping in Vercel
 
 | Branch | Vercel env |
 |---|---|
-| `main` | Production (`getbigo.app`) |
+| `main` | Production (`bigo.space`) |
 | `staging` | Preview (`staging-bigo.vercel.app`) |
 | `dev` | Preview (`dev-bigo.vercel.app`) |
 
@@ -161,8 +161,8 @@ The auto-updater in the app reads GitHub releases — users get prompted to upda
 
 ## 9. Post-deploy checklist
 
-- [ ] `https://getbigo.app` loads landing page
-- [ ] `https://api.getbigo.app/health` returns `{"status":"ok"}`
+- [ ] `https://bigo.space` loads landing page
+- [ ] `https://api.bigo.space/health` returns `{"status":"ok"}`
 - [ ] Sign-up flow works (Clerk)
 - [ ] Stripe test checkout completes (use card `4242 4242 4242 4242`)
 - [ ] License key email arrives in inbox
@@ -180,7 +180,7 @@ Stripe Dashboard → Products → Coupons → Create
 
 ### Manually issue a license
 ```bash
-curl -X POST https://api.getbigo.app/api/licenses/create \
+curl -X POST https://api.bigo.space/api/licenses/create \
   -H "X-Internal-Secret: $INTERNAL_API_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","plan":"PRO","paymentId":"manual"}'
@@ -189,7 +189,7 @@ curl -X POST https://api.getbigo.app/api/licenses/create \
 ### Revoke a license
 Use `/admin` panel → Revoke button, or:
 ```bash
-curl -X POST https://api.getbigo.app/api/licenses/revoke \
+curl -X POST https://api.bigo.space/api/licenses/revoke \
   -H "X-Internal-Secret: $INTERNAL_API_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"key":"BIGO-XXXX-XXXX-XXXX"}'
