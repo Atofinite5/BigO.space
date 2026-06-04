@@ -242,6 +242,18 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
   const [language, setLanguageState] = useState<string>("python");
   const [yenModeEnabled, setYenModeEnabled] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // ── License / subscription state ──────────────────────────────────────────
+  const [licenseKeyInput, setLicenseKeyInput] = useState("");
+  const [licenseStatus, setLicenseStatus] = useState<
+    "checking" | "unauthenticated" | "invalid_key" | "no_subscription" | "active"
+  >("checking");
+  const [licensePlan, setLicensePlan] = useState<string>("free");
+  const [licenseEmail, setLicenseEmail] = useState<string>("");
+  const [solvesUsedToday, setSolvesUsedToday] = useState<number>(0);
+  const [solvesLimit, setSolvesLimit] = useState<number | null>(5);
+  const [licenseLoading, setLicenseLoading] = useState(false);
+
   const { showToast } = useToast();
 
   // Sync with external open state
@@ -295,6 +307,81 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
         });
     }
   }, [open, showToast]);
+
+  // Load license / auth state when the dialog opens
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    window.electronAPI
+      .getAuthState?.()
+      .then((state: {
+        status: typeof licenseStatus;
+        plan: string;
+        email?: string;
+        solvesUsedToday: number;
+        solvesLimit: number | null;
+      }) => {
+        if (!alive || !state) return;
+        setLicenseStatus(state.status);
+        setLicensePlan(state.plan);
+        setLicenseEmail(state.email || "");
+        setSolvesUsedToday(state.solvesUsedToday);
+        setSolvesLimit(state.solvesLimit);
+      })
+      .catch(() => {
+        /* backend offline — leave defaults */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open]);
+
+  const handleActivateLicense = async () => {
+    const key = licenseKeyInput.trim();
+    if (!key) {
+      showToast("License", "Please enter your license key.", "error");
+      return;
+    }
+    setLicenseLoading(true);
+    try {
+      const result = await window.electronAPI.validateLicenseKey(key);
+      if (result?.valid) {
+        showToast("Activated", "Your BigO Pro license is now active.", "success");
+        // Refresh auth state
+        const state = await window.electronAPI.getAuthState();
+        setLicenseStatus(state.status);
+        setLicensePlan(state.plan);
+        setLicenseEmail(state.email || "");
+        setSolvesUsedToday(state.solvesUsedToday);
+        setSolvesLimit(state.solvesLimit);
+        setLicenseKeyInput("");
+      } else {
+        showToast("Invalid key", result?.error || "License key was rejected.", "error");
+      }
+    } catch {
+      showToast("Error", "Could not reach BigO servers. Check your connection.", "error");
+    } finally {
+      setLicenseLoading(false);
+    }
+  };
+
+  const handleRemoveLicense = async () => {
+    setLicenseLoading(true);
+    try {
+      await window.electronAPI.removeLicenseKey();
+      const state = await window.electronAPI.getAuthState();
+      setLicenseStatus(state.status);
+      setLicensePlan(state.plan);
+      setLicenseEmail(state.email || "");
+      setSolvesUsedToday(state.solvesUsedToday);
+      setSolvesLimit(state.solvesLimit);
+      showToast("License removed", "Reverted to the free tier.", "neutral");
+    } catch {
+      showToast("Error", "Could not remove license.", "error");
+    } finally {
+      setLicenseLoading(false);
+    }
+  };
 
   // Handle API provider change
   const handleProviderChange = (provider: APIProvider) => {
@@ -394,6 +481,80 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {/* ── License / Subscription ──────────────────────────────────── */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-white">License</label>
+              <span
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  licenseStatus === "active"
+                    ? "text-green-400 bg-green-400/10"
+                    : licenseStatus === "no_subscription"
+                    ? "text-amber-400 bg-amber-400/10"
+                    : "text-white/40 bg-white/[0.06]"
+                }`}
+              >
+                {licenseStatus === "active"
+                  ? `${licensePlan.toUpperCase()} · Active`
+                  : licenseStatus === "no_subscription"
+                  ? "Limit reached"
+                  : "Free tier"}
+              </span>
+            </div>
+
+            {licenseStatus === "active" ? (
+              <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                <p className="text-sm text-white">
+                  {licensePlan.toUpperCase()} plan — unlimited solves
+                </p>
+                {licenseEmail && (
+                  <p className="text-xs text-white/50 mt-0.5">{licenseEmail}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleRemoveLicense}
+                  disabled={licenseLoading}
+                  className="mt-2 text-xs text-red-400/70 hover:text-red-400 transition-colors disabled:opacity-40"
+                >
+                  {licenseLoading ? "Removing…" : "Remove license"}
+                </button>
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-black/30 border border-white/5 space-y-2">
+                <p className="text-xs text-white/60">
+                  Free tier: {solvesUsedToday}/{solvesLimit ?? "∞"} solves used today.
+                  Enter your license key to unlock unlimited.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={licenseKeyInput}
+                    onChange={(e) => setLicenseKeyInput(e.target.value)}
+                    placeholder="BIGO-XXXX-XXXX-XXXX-XXXX"
+                    spellCheck={false}
+                    autoComplete="off"
+                    className="flex-1 bg-black/40 border border-white/10 rounded-md px-3 py-2 text-white text-xs font-mono placeholder:text-white/20 focus:outline-none focus:border-white/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleActivateLicense}
+                    disabled={licenseLoading || !licenseKeyInput.trim()}
+                    className="px-3 py-2 rounded-md bg-white text-black text-xs font-semibold hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {licenseLoading ? "…" : "Activate"}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openExternalLink("https://getbigo.app/pricing")}
+                  className="text-xs text-blue-400 hover:underline"
+                >
+                  Don&apos;t have a key? Get Pro →
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Output mode / language — choose programming language or Subjective for theory answers */}
           <LanguageSelector
             currentLanguage={language}

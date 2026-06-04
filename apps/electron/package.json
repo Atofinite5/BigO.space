@@ -63,7 +63,7 @@
       "protocols": {
         "name": "bigo-protocol",
         "schemes": [
-          "interview-coder"
+          "bigo"
         ]
       }
     },

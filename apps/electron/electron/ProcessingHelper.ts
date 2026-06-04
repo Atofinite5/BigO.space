@@ -7,6 +7,7 @@ import * as axios from "axios"
 import { app, BrowserWindow, dialog } from "electron"
 import { OpenAI } from "openai"
 import { configHelper } from "./ConfigHelper"
+import { authHelper } from "./AuthHelper"
 import Anthropic from '@anthropic-ai/sdk';
 import {
   initMemory,
@@ -492,6 +493,20 @@ Space complexity: O(...) — [reason]
       if (existingScreenshots.length === 0) {
         console.log("Screenshot files don't exist on disk");
         mainWindow.webContents.send(this.deps.PROCESSING_EVENTS.NO_SCREENSHOTS);
+        return;
+      }
+
+      // ── BigO quota gate ───────────────────────────────────────────────────
+      // Enforce the daily free-tier limit. canSolve() tracks the solve against
+      // the backend and flips auth state to "no_subscription" (which surfaces
+      // the paywall in the renderer) when the quota is exhausted.
+      const quota = await authHelper.canSolve();
+      if (!quota.allowed) {
+        console.log("[BigO] solve blocked — quota exhausted");
+        mainWindow.webContents.send(
+          this.deps.PROCESSING_EVENTS.INITIAL_SOLUTION_ERROR,
+          quota.reason || "Daily solve limit reached. Upgrade to Pro for unlimited."
+        );
         return;
       }
 

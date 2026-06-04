@@ -9,6 +9,7 @@ import * as axios from "axios"
 import { OpenAI } from "openai"
 import Anthropic from "@anthropic-ai/sdk"
 import { configHelper } from "./ConfigHelper"
+import { authHelper } from "./AuthHelper"
 
 export const YEN_BUCKET_COUNT = 5
 
@@ -249,6 +250,17 @@ export class YenHelper {
     }
     if (!this.state.captureQueue.length) {
       return { ok: false, error: "No screenshots captured. Press Cmd+H first." }
+    }
+
+    // ── BigO quota gate ─────────────────────────────────────────────────────
+    // A bucket summarization is a "solve" — enforce the daily limit. canSolve()
+    // also flips auth state to "no_subscription" to surface the paywall.
+    const quota = await authHelper.canSolve()
+    if (!quota.allowed) {
+      return {
+        ok: false,
+        error: quota.reason || "Daily solve limit reached. Upgrade to Pro for unlimited.",
+      }
     }
 
     // Always save into the next empty bucket (1→2→3→4→5).

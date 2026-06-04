@@ -59,8 +59,22 @@ export interface ElectronAPI {
   checkApiKey: () => Promise<boolean>
   validateApiKey: (apiKey: string) => Promise<{ valid: boolean; error?: string }>
   openLink: (url: string) => void
+  openExternalUrl: (url: string) => void
   onApiKeyInvalid: (callback: () => void) => () => void
   removeListener: (eventName: string, callback: (...args: any[]) => void) => void
+
+  // BigO license / auth
+  getAuthState: () => Promise<{
+    status: "checking" | "unauthenticated" | "invalid_key" | "no_subscription" | "active"
+    plan: string
+    solvesUsedToday: number
+    solvesLimit: number | null
+    email?: string
+    offlineMode: boolean
+  }>
+  validateLicenseKey: (key: string) => Promise<{ valid: boolean; error?: string }>
+  removeLicenseKey: () => Promise<{ ok: boolean }>
+  onAuthStateChanged: (callback: (state: any) => void) => () => void
 
   // Yen (in-memory bucket mode)
   yenGetState: () => Promise<any>
