@@ -8,6 +8,7 @@ import { ShortcutsHelper } from "./shortcuts"
 import { initAutoUpdater } from "./autoUpdater"
 import { configHelper } from "./ConfigHelper"
 import { YenHelper } from "./YenHelper"
+import { authHelper } from "./AuthHelper"
 import * as dotenv from "dotenv"
 
 interface ProblemInfo {
@@ -614,7 +615,15 @@ async function initializeApp() {
     app.setPath('cache', cachePath)
       
     loadEnvVariables()
-    
+
+    // ── BigO auth: validate license on startup ──────────────────────────────
+    authHelper.initialize().then((authState) => {
+      console.log(`[Auth] startup status: ${authState.status} / plan: ${authState.plan}`)
+    }).catch((err) => {
+      console.error('[Auth] initialize failed:', err)
+    })
+    authHelper.startPeriodicRevalidation()
+
     // Ensure a configuration file exists
     if (!configHelper.hasApiKey()) {
       console.log("No API key found in configuration. User will need to set up.")

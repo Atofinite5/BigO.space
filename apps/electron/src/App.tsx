@@ -1,4 +1,5 @@
 import SubscribedApp from "./_pages/SubscribedApp"
+import SubscribePage from "./_pages/SubscribePage"
 import { UpdateNotification } from "./components/UpdateNotification"
 import {
   QueryClient,
@@ -15,6 +16,17 @@ import {
 import { ToastContext } from "./contexts/toast"
 import { WelcomeScreen } from "./components/WelcomeScreen"
 import { SettingsDialog } from "./components/Settings/SettingsDialog"
+
+// ── Auth types (mirror electron/AuthHelper.ts) ──────────────────────────────
+type AuthStatus = 'checking' | 'unauthenticated' | 'invalid_key' | 'no_subscription' | 'active'
+interface AuthState {
+  status: AuthStatus
+  plan: string
+  solvesUsedToday: number
+  solvesLimit: number | null
+  email?: string
+  offlineMode: boolean
+}
 
 // Create a React Query client
 const queryClient = new QueryClient({
@@ -39,19 +51,28 @@ function App() {
     description: "",
     variant: "neutral" as "neutral" | "success" | "error"
   })
-  const [credits, setCredits] = useState<number>(999) // Unlimited credits
+  const [credits, setCredits] = useState<number>(999)
   const [currentLanguage, setCurrentLanguage] = useState<string>("python")
   const [isInitialized, setIsInitialized] = useState(false)
   const [hasApiKey, setHasApiKey] = useState(false)
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false)
-  // Note: Model selection is now handled via separate extraction/solution/debugging model settings
-
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
-  // Set unlimited credits
-  const updateCredits = useCallback(() => {
-    setCredits(999) // No credit limit in this version
-    window.__CREDITS__ = 999
+  // ── BigO auth state ───────────────────────────────────────────────────────
+  const [authState, setAuthState] = useState<AuthState>({
+    status: 'checking',
+    plan: 'free',
+    solvesUsedToday: 0,
+    solvesLimit: 5,
+    offlineMode: false,
+  })
+
+  // Set credits from plan
+  const updateCredits = useCallback((state?: AuthState) => {
+    const limit = state?.solvesLimit ?? 999
+    const remaining = limit === null ? 999 : Math.max(0, limit - (state?.solvesUsedToday ?? 0))
+    setCredits(remaining)
+    window.__CREDITS__ = remaining
   }, [])
 
   // Helper function to safely update language
@@ -291,27 +312,48 @@ function App() {
     }
   }, [])
 
-  // Initialize basic app state
+  // ── BigO auth: check license on startup ────────────────────────────────────
+  useEffect(() => {
+    let alive = true
+    async function checkAuth() {
+      try {
+        const state: AuthState = await window.electronAPI.getAuthState()
+        if (!alive) return
+        setAuthState(state)
+        updateCredits(state)
+        // Listen for future state changes (e.g., quota hit mid-session)
+        window.electronAPI.onAuthStateChanged?.((s: AuthState) => {
+          if (!alive) return
+          setAuthState(s)
+          updateCredits(s)
+        })
+      } catch (err) {
+        console.error('[App] getAuthState failed:', err)
+        if (!alive) return
+        // Fail open — treat as free tier so app stays usable
+        setAuthState({ status: 'unauthenticated', plan: 'free', solvesUsedToday: 0, solvesLimit: 5, offlineMode: true })
+        updateCredits()
+      }
+    }
+    checkAuth()
+    return () => { alive = false }
+  }, [updateCredits])
+
+  // ── Initialize basic app state ──────────────────────────────────────────────
   useEffect(() => {
     // Load config and set values
     const initializeApp = async () => {
       try {
-        // Set unlimited credits
-        updateCredits()
-        
         // Load config including language and model settings
         const config = await window.electronAPI.getConfig()
-        
+
         // Load language preference
         if (config && config.language) {
           updateLanguage(config.language)
         } else {
           updateLanguage("python")
         }
-        
-        // Model settings are now managed through the settings dialog
-        // and stored in config as extractionModel, solutionModel, and debuggingModel
-        
+
         markInitialized()
       } catch (error) {
         console.error("Failed to initialize app:", error)
@@ -320,7 +362,7 @@ function App() {
         markInitialized()
       }
     }
-    
+
     initializeApp()
 
     // Event listeners for process events
@@ -391,7 +433,18 @@ function App() {
       <ToastProvider>
         <ToastContext.Provider value={{ showToast }}>
           <div>
-            {isInitialized ? (
+            {/* ── Auth gate ──────────────────────────────────────── */}
+            {authState.status === 'checking' || !isInitialized ? (
+              <div className="answer-card">
+                <div className="answer-card__loading">Loading BigO…</div>
+              </div>
+            ) : authState.status === 'no_subscription' ? (
+              /* Quota hit → show paywall */
+              <SubscribePage
+                user={{ id: '', email: authState.email || '' } as any}
+              />
+            ) : (
+              /* Free tier / active subscription → normal app */
               hasApiKey ? (
                 <SubscribedApp
                   credits={credits}
@@ -401,10 +454,6 @@ function App() {
               ) : (
                 <WelcomeScreen onOpenSettings={handleOpenSettings} />
               )
-            ) : (
-              <div className="answer-card">
-                <div className="answer-card__loading">Initializing…</div>
-              </div>
             )}
             <UpdateNotification />
           </div>

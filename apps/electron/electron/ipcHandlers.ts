@@ -4,6 +4,7 @@ import { ipcMain, shell, dialog, clipboard } from "electron"
 import { randomBytes } from "crypto"
 import { IIpcHandlerDeps } from "./main"
 import { configHelper } from "./ConfigHelper"
+import { authHelper } from "./AuthHelper"
 import {
   getStatus as getMemoryStatus,
   initMemory,
@@ -485,6 +486,48 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
     } catch (error) {
       console.error("Error deleting last screenshot:", error)
       return { success: false, error: "Failed to delete last screenshot" }
+    }
+  })
+
+  // ── BigO Auth / License handlers ──────────────────────────────────────────
+
+  ipcMain.handle("auth-get-state", async () => {
+    return authHelper.getState()
+  })
+
+  ipcMain.handle("auth-validate-license", async (_event, key: string) => {
+    const state = await authHelper.setLicenseKey(key)
+    // Broadcast the new state so all renderer windows stay in sync
+    const mainWindow = deps.getMainWindow()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("auth-state-changed", state)
+    }
+    if (state.status === 'active') {
+      return { valid: true }
+    }
+    return {
+      valid: false,
+      error: state.status === 'invalid_key'
+        ? "Invalid or expired license key."
+        : "Could not verify key. Please check your connection.",
+    }
+  })
+
+  ipcMain.handle("auth-remove-license", async () => {
+    await authHelper.removeLicenseKey()
+    const state = authHelper.getState()
+    const mainWindow = deps.getMainWindow()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("auth-state-changed", state)
+    }
+    return { ok: true }
+  })
+
+  // Forward auth state changes to the renderer whenever they happen
+  authHelper.on("state-changed", (state) => {
+    const mainWindow = deps.getMainWindow()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("auth-state-changed", state)
     }
   })
 }

@@ -7,16 +7,29 @@ import { OpenAI } from "openai"
 import axios from "axios"
 
 interface Config {
+  // ── AI provider settings ────────────────────────────────────────────────
   apiKey: string;
-  apiProvider: "openai" | "gemini" | "anthropic" | "xai" | "groq";  // Added provider selection
+  apiProvider: "openai" | "gemini" | "anthropic" | "xai" | "groq";
   extractionModel: string;
   solutionModel: string;
   debuggingModel: string;
   language: string;
+
+  // ── Window / UX ─────────────────────────────────────────────────────────
   opacity: number;
+
+  // ── Legacy memory (pgvector) ─────────────────────────────────────────────
   memoryEnabled: boolean;
   memoryConnectionString: string;
+
+  // ── BigO feature flag (formerly "Yen mode") ──────────────────────────────
   yenModeEnabled: boolean;
+
+  // ── BigO license & auth ──────────────────────────────────────────────────
+  licenseKey?: string;                                    // user-entered purchase key
+  licensePlan?: 'free' | 'basic' | 'pro' | 'enterprise'; // cached from last validation
+  licenseEmail?: string;                                  // account email from BigO backend
+  deviceId?: string;                                      // stable per-device fingerprint
 }
 
 export class ConfigHelper extends EventEmitter {
@@ -35,7 +48,11 @@ export class ConfigHelper extends EventEmitter {
     memoryConnectionString:
       process.env.MEMORY_DB_URL ||
       `postgres://${process.env.USER || "postgres"}@localhost:5432/coding_memory`,
-    yenModeEnabled: false
+    yenModeEnabled: false,
+    licenseKey: "",
+    licensePlan: undefined,
+    licenseEmail: undefined,
+    deviceId: undefined,
   };
 
   constructor() {

@@ -14,6 +14,7 @@ import sessionRoutes from './modules/ai-session/session.routes';
 import paymentRoutes from './modules/payment/payment.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import webhookRoutes from './modules/webhook/webhook.routes';
+import licenseRoutes from './modules/license/license.routes';
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/licenses', licenseRoutes);    // Desktop app license validation
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 404 Catch-All

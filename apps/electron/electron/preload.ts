@@ -271,10 +271,23 @@ const electronAPI = {
     }
   },
   checkApiKey: () => ipcRenderer.invoke("check-api-key"),
-  validateApiKey: (apiKey: string) => 
+  validateApiKey: (apiKey: string) =>
     ipcRenderer.invoke("validate-api-key", apiKey),
-  openExternal: (url: string) => 
+  openExternal: (url: string) =>
     ipcRenderer.invoke("openExternal", url),
+  openExternalUrl: (url: string) =>
+    ipcRenderer.invoke("openExternal", url),
+
+  // ── BigO auth / license ──────────────────────────────────────────────────
+  getAuthState: () => ipcRenderer.invoke("auth-get-state"),
+  validateLicenseKey: (key: string) => ipcRenderer.invoke("auth-validate-license", key),
+  removeLicenseKey: () => ipcRenderer.invoke("auth-remove-license"),
+  onAuthStateChanged: (callback: (state: any) => void) => {
+    const sub = (_: any, s: any) => callback(s)
+    ipcRenderer.on("auth-state-changed", sub)
+    return () => ipcRenderer.removeListener("auth-state-changed", sub)
+  },
+
   onApiKeyInvalid: (callback: () => void) => {
     const subscription = () => callback()
     ipcRenderer.on(PROCESSING_EVENTS.API_KEY_INVALID, subscription)
