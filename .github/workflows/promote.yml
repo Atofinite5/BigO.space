@@ -1,0 +1,31 @@
+name: Promote staging → main
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'promote' to confirm production deployment"
+        required: true
+
+jobs:
+  promote:
+    name: Merge staging into main
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'promote'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge staging → main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git merge origin/staging --no-ff -m "chore: promote staging → main [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
+          git push origin main
+
+      - name: Summary
+        run: echo "✅ staging merged into main — Vercel and Railway will auto-deploy."

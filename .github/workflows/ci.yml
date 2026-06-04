@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, staging, dev]
+  push:
+    branches: [main, staging, dev]
+
+jobs:
+  # ── Backend type-check ──────────────────────────────────────────────────────
+  backend:
+    name: Backend (type-check + lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Type-check
+        run: npm run type-check
+
+  # ── Web type-check + build ──────────────────────────────────────────────────
+  web:
+    name: Web (type-check + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    env:
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_stub
+      CLERK_SECRET_KEY: sk_test_stub
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stub
+      STRIPE_SECRET_KEY: sk_test_stub
+      STRIPE_WEBHOOK_SECRET: whsec_stub
+      NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY: price_stub
+      NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL: price_stub
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+      BIGO_API_URL: http://localhost:3000
+      INTERNAL_API_SECRET: stub
+      RESEND_API_KEY: re_stub
+      ADMIN_EMAILS: admin@example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  # ── Electron type-check ─────────────────────────────────────────────────────
+  electron:
+    name: Electron (type-check)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/electron
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/electron/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check electron process
+        run: ./node_modules/.bin/tsc -p tsconfig.electron.json --noEmit

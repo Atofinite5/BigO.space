@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { useAuth, UserButton } from '@clerk/nextjs'
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
+  const { isSignedIn } = useAuth()
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06] bg-black/80 backdrop-blur-md">
@@ -24,29 +25,32 @@ export function Navbar() {
 
         {/* CTA */}
         <div className="flex items-center gap-3">
-          <SignedOut>
-            <Link
-              href="/sign-in"
-              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="#pricing"
-              className="text-sm font-medium bg-white text-black px-4 py-1.5 rounded-lg hover:bg-white/90 transition-colors"
-            >
-              Get Pro
-            </Link>
-          </SignedOut>
-          <SignedIn>
-            <Link
-              href="/dashboard"
-              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
-            >
-              Dashboard
-            </Link>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          {isSignedIn ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+              >
+                Dashboard
+              </Link>
+              <UserButton />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="#pricing"
+                className="text-sm font-medium bg-white text-black px-4 py-1.5 rounded-lg hover:bg-white/90 transition-colors"
+              >
+                Get Pro
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -75,8 +79,14 @@ export function Navbar() {
           <Link href="#how-it-works" onClick={() => setOpen(false)} className="text-white/60 hover:text-white">How it works</Link>
           <Link href="#features" onClick={() => setOpen(false)} className="text-white/60 hover:text-white">Features</Link>
           <Link href="#pricing" onClick={() => setOpen(false)} className="text-white/60 hover:text-white">Pricing</Link>
-          <Link href="/sign-in" className="text-white/60 hover:text-white">Sign in</Link>
-          <Link href="#pricing" onClick={() => setOpen(false)} className="font-medium text-white">Get Pro →</Link>
+          {isSignedIn ? (
+            <Link href="/dashboard" className="text-white/60 hover:text-white">Dashboard</Link>
+          ) : (
+            <>
+              <Link href="/sign-in" className="text-white/60 hover:text-white">Sign in</Link>
+              <Link href="#pricing" onClick={() => setOpen(false)} className="font-medium text-white">Get Pro →</Link>
+            </>
+          )}
         </div>
       )}
     </header>

@@ -74,7 +74,7 @@ export function AdminClient({ licenses, stats, adminEmail }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/30 text-sm hidden sm:block">{adminEmail}</span>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
       </header>
 

@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "description": "BigO — AI interview assistant. Monorepo for Electron app, web frontend, and backend API.",
-  "workspaces": [
-    "apps/electron",
-    "apps/web",
-    "backend"
-  ],
   "scripts": {
     "dev:backend": "cd backend && npm run dev",
     "dev:web": "cd apps/web && npm run dev",

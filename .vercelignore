@@ -1,0 +1,4 @@
+# Only apps/web is deployed to Vercel
+# Backend goes to Railway
+backend/
+apps/electron/

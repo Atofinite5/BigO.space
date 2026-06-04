@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { PlanTier } from '@prisma/client';
 import { licenseService } from './license.service';
-import { successResponse } from '../../shared/response';
+import { sendSuccess } from '../../shared/response';
 
 const validateSchema = z.object({
   licenseKey: z.string().min(10),
@@ -21,7 +21,7 @@ export const licenseController = {
     try {
       const { licenseKey, deviceId } = validateSchema.parse(req.body);
       const result = await licenseService.validateLicense(licenseKey, deviceId);
-      res.json(successResponse(result));
+      sendSuccess(res, result);
     } catch (err) {
       next(err);
     }
@@ -31,7 +31,7 @@ export const licenseController = {
     try {
       const { licenseKey, deviceId } = trackSchema.parse(req.body);
       const result = await licenseService.trackSolve(licenseKey ?? null, deviceId);
-      res.json(successResponse(result));
+      sendSuccess(res, result);
     } catch (err) {
       next(err);
     }
@@ -41,7 +41,7 @@ export const licenseController = {
     try {
       const email = z.string().email().parse(req.query.email);
       const license = await licenseService.getLicenseByEmail(email);
-      res.json(successResponse(license));
+      sendSuccess(res, license);
     } catch (err) {
       next(err);
     }
@@ -51,7 +51,7 @@ export const licenseController = {
     try {
       const { key } = z.object({ key: z.string() }).parse(req.body);
       const ok = await licenseService.revoke(key);
-      res.json(successResponse({ ok }));
+      sendSuccess(res, { ok });
     } catch (err) {
       next(err);
     }
@@ -61,16 +61,16 @@ export const licenseController = {
     try {
       const { stripeSubscriptionId } = z.object({ stripeSubscriptionId: z.string() }).parse(req.body);
       await licenseService.deactivateBySubscription(stripeSubscriptionId);
-      res.json(successResponse({ ok: true }));
+      sendSuccess(res, { ok: true });
     } catch (err) {
       next(err);
     }
   },
 
-  async adminList(req: Request, res: Response, next: NextFunction) {
+  async adminList(_req: Request, res: Response, next: NextFunction) {
     try {
       const data = await licenseService.adminList();
-      res.json(successResponse(data));
+      sendSuccess(res, data);
     } catch (err) {
       next(err);
     }
@@ -96,7 +96,7 @@ export const licenseController = {
         stripeSubscriptionId,
       });
 
-      res.json(successResponse({ licenseKey }));
+      sendSuccess(res, { licenseKey });
     } catch (err) {
       next(err);
     }

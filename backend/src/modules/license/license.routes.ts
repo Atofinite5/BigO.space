@@ -2,7 +2,6 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { licenseController } from './license.controller';
-import { env } from '../../config/env';
 
 const router = Router();
 

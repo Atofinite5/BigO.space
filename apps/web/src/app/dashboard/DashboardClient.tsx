@@ -64,7 +64,7 @@ export function DashboardClient({ user, license }: Props) {
         <Link href="/" className="font-bold text-white text-base">BigO</Link>
         <div className="flex items-center gap-3">
           <span className="text-white/30 text-sm hidden sm:block">{user.email}</span>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
       </header>
 
