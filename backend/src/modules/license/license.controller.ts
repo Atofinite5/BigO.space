@@ -2,6 +2,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { PlanTier } from '@prisma/client';
 import { licenseService } from './license.service';
 import { successResponse } from '../../shared/response';
 
@@ -31,6 +32,30 @@ export const licenseController = {
       const { licenseKey, deviceId } = trackSchema.parse(req.body);
       const result = await licenseService.trackSolve(licenseKey ?? null, deviceId);
       res.json(successResponse(result));
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async create(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, plan, paymentId } = z.object({
+        email: z.string().email(),
+        plan: z.string().default('PRO'),
+        paymentId: z.string(),
+      }).parse(req.body);
+
+      const planTier = (plan.toUpperCase() as PlanTier) in PlanTier
+        ? (plan.toUpperCase() as PlanTier)
+        : PlanTier.PRO;
+
+      const licenseKey = await licenseService.createLicenseForPayment({
+        email,
+        plan: planTier,
+        paymentId,
+      });
+
+      res.json(successResponse({ licenseKey }));
     } catch (err) {
       next(err);
     }
