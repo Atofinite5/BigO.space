@@ -3,6 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
-  "regions": ["bom1", "sin1", "iad1"],
+  "regions": ["bom1"],
   "crons": []
 }
