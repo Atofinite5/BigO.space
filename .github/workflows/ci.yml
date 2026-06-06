@@ -6,6 +6,11 @@ on:
   push:
     branches: [main, staging, dev]
 
+# Cancel superseded runs on the same ref so only the latest commit is tested.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ── Backend type-check ──────────────────────────────────────────────────────
   backend:
