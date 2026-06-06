@@ -2,6 +2,8 @@
 
 > The invisible AI assistant for technical interviews.
 
+📐 **[System Design](./docs/ARCHITECTURE.md)** · 🔀 **[Branching & Release Pipeline](./docs/WORKFLOW.md)** · 🚀 **[Deployment Guide](./DEPLOY.md)**
+
 ## Monorepo Structure
 
 ```

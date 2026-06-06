@@ -1,0 +1,12 @@
+# BigO code owners — auto-requested as reviewers on matching paths.
+# https://docs.github.com/articles/about-code-owners
+
+# Default owner for everything
+*                   @Atofinite5
+
+# Component owners (adjust as the team grows)
+/apps/electron/     @Atofinite5
+/apps/web/          @Atofinite5
+/backend/           @Atofinite5
+/.github/           @Atofinite5
+/docs/              @Atofinite5
