@@ -185,7 +185,7 @@ export function DashboardClient({ user, license }: Props) {
               <p className="text-white/30 text-xs">macOS · Always-on-top · Invisible overlay</p>
             </div>
             <a
-              href="https://github.com/Quick-Genius/BigO/releases/latest"
+              href="https://github.com/Atofinite5/BigO.space/releases/latest"
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 px-4 py-2 rounded-xl border border-white/[0.12] text-white/60 text-sm hover:bg-white/[0.05] hover:text-white transition-all"

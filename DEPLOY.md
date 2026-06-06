@@ -63,7 +63,7 @@ openssl rand -hex 32
 
 ## 6. Deploy backend → Railway
 
-1. Go to railway.app → New Project → Deploy from GitHub → `Quick-Genius/BigO`
+1. Go to railway.app → New Project → Deploy from GitHub → `Atofinite5/BigO.space`
 2. Set **Root Directory** to `backend`
 3. Railway auto-detects `railway.toml` and runs `npm run build` + migrations
 4. Add a **PostgreSQL** service (Railway Marketplace) — copy `DATABASE_URL`
@@ -97,13 +97,13 @@ npm i -g vercel@latest
 # Link project (run from repo root)
 cd apps/web
 vercel link
-# Select: Quick-Genius / BigO / apps/web
+# Select: Atofinite5 / BigO.space / apps/web
 
 # Set root directory in Vercel Dashboard → Settings → General → Root Directory = apps/web
 ```
 
 Or via Vercel Dashboard:
-1. New Project → Import `Quick-Genius/BigO`
+1. New Project → Import `Atofinite5/BigO.space`
 2. **Root Directory**: `apps/web`
 3. Framework: Next.js (auto-detected)
 4. Add all env vars from `apps/web/.env.example`:

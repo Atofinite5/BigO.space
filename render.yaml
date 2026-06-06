@@ -1,6 +1,6 @@
 # BigO backend — Render Blueprint
 # Provisions: Express web service + PostgreSQL + Key Value (Redis) in one go.
-# Create via: Render Dashboard → New → Blueprint → connect Quick-Genius/BigO
+# Create via: Render Dashboard → New → Blueprint → connect Atofinite5/BigO.space
 
 databases:
   - name: bigo-postgres

@@ -73,7 +73,7 @@ export function Pricing() {
             </div>
 
             <a
-              href="https://github.com/Quick-Genius/BigO/releases/latest"
+              href="https://github.com/Atofinite5/BigO.space/releases/latest"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full py-3 rounded-xl border border-white/[0.12] text-white/70 text-sm font-medium text-center hover:bg-white/[0.05] hover:text-white transition-all mb-6"

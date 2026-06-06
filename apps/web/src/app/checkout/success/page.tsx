@@ -22,7 +22,7 @@ export default function CheckoutSuccessPage() {
           View dashboard →
         </Link>
         <a
-          href="https://github.com/Quick-Genius/BigO/releases/latest"
+          href="https://github.com/Atofinite5/BigO.space/releases/latest"
           target="_blank"
           rel="noopener noreferrer"
           className="px-6 py-2.5 rounded-xl border border-white/[0.12] text-white/70 text-sm hover:bg-white/[0.05] hover:text-white transition-all"

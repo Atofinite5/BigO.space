@@ -70,8 +70,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Quick-Genius",
-        "repo": "BigO",
+        "owner": "Atofinite5",
+        "repo": "BigO.space",
         "private": false,
         "releaseType": "release"
       }

@@ -44,7 +44,7 @@ export async function sendLicenseEmail(opts: {
       </ol>
     </div>
 
-    <a href="https://github.com/Quick-Genius/BigO/releases/latest"
+    <a href="https://github.com/Atofinite5/BigO.space/releases/latest"
        style="display:inline-block;background:#fff;color:#000;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none">
       Download BigO
     </a>
