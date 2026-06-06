@@ -1,0 +1,73 @@
+# BigO backend — Render Blueprint
+# Provisions: Express web service + PostgreSQL + Key Value (Redis) in one go.
+# Create via: Render Dashboard → New → Blueprint → connect Quick-Genius/BigO
+
+databases:
+  - name: bigo-postgres
+    databaseName: bigo
+    user: bigo
+    plan: free          # free Postgres expires after 30 days — upgrade to "basic" for production
+    region: singapore
+
+services:
+  # ── Redis / Key Value store ──────────────────────────────────────────────
+  - type: keyvalue
+    name: bigo-redis
+    plan: free
+    region: singapore
+    ipAllowList: []      # internal access only (no public connections)
+
+  # ── Express API ──────────────────────────────────────────────────────────
+  - type: web
+    name: bigo-backend
+    runtime: node
+    plan: free           # free web services cold-start after 15 min idle — upgrade to "starter" for always-on
+    region: singapore
+    rootDir: backend
+    buildCommand: npm install && npm run build && npx prisma generate
+    startCommand: npx prisma migrate deploy && node dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: LOG_LEVEL
+        value: info
+      - key: CORS_ORIGIN
+        value: https://bigo.space
+
+      # Wired automatically from the provisioned database + key value store
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bigo-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: bigo-redis
+          type: keyvalue
+          property: connectionString
+
+      # Secrets — set these in the Render dashboard (sync: false = not stored in git)
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: INTERNAL_API_SECRET
+        sync: false
+
+      # Session tuning (have defaults, set explicitly for clarity)
+      - key: SESSION_HEARTBEAT_INTERVAL_SECONDS
+        value: 30
+      - key: SESSION_STALE_THRESHOLD_SECONDS
+        value: 300
