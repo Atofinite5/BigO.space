@@ -12,7 +12,15 @@ async function bootstrap(): Promise<void> {
   await prisma.$connect();
   logger.info('✅  PostgreSQL connected');
 
-  await redisClient.connect();
+  // ioredis is configured with lazyConnect, but importing app/middleware
+  // (e.g. the rate limiter's RedisStore) can issue a command that triggers
+  // the connection before we reach here. Only call connect() if still in the
+  // initial 'wait' state — otherwise it throws "already connecting/connected".
+  if (redisClient.status === 'wait') {
+    await redisClient.connect();
+  }
+  // Verify connectivity regardless of who initiated the connection.
+  await redisClient.ping();
   logger.info('✅  Redis connected');
 
   const server = app.listen(PORT, () => {
