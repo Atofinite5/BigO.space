@@ -24,7 +24,7 @@ services:
     plan: free           # free web services cold-start after 15 min idle — upgrade to "starter" for always-on
     region: singapore
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
     startCommand: npx prisma db push --accept-data-loss && node dist/server.js
     healthCheckPath: /health
     envVars:
