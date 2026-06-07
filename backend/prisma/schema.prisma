@@ -235,7 +235,6 @@ model Payment {
 
   user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscription UserSubscription?
-  license      License?
 
   @@index([userId])
   @@index([status])
@@ -325,18 +324,19 @@ model License {
   dailySolveCount Int      @default(0)
   lastSolveDate   DateTime?
 
-  // Audit
-  paymentId   String?  @unique   // @unique required for one-to-one Payment relation
+  // Audit — stores the Stripe payment-intent or subscription id as a plain
+  // reference (NOT a foreign key; the license flow does not create a Payment row).
+  paymentId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([key])
   @@index([userId])
   @@index([isActive])
   @@index([expiresAt])
+  @@index([paymentId])
 }
 
 // ─────────────────────────────────────────────
