@@ -1,40 +1,41 @@
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans, Geist_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
-// Plus Jakarta Sans — the rounded, geometric bold used throughout the design.
-const jakarta = Plus_Jakarta_Sans({
-  variable: '--font-sans',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-})
-const geistMono = Geist_Mono({ variable: '--font-mono', subsets: ['latin'] })
+const inter = Inter({ variable: '--font-inter', subsets: ['latin'], weight: ['400', '500', '600', '700'] })
+const jetbrains = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'], weight: ['400', '500'] })
 
 export const metadata: Metadata = {
-  title: 'BigO — Invisible AI for Technical Interviews',
+  title: 'BigO | The Invisible AI Assistant',
   description:
-    'BigO is an always-on-top, screen-capture-invisible AI overlay that solves coding problems and MCQs in real time. Used by engineers at top companies.',
-  keywords: ['interview', 'coding', 'AI', 'LeetCode', 'technical interview', 'invisible'],
+    'BigO operates at the system level, providing real-time O(n) analysis and code solutions without ever appearing in screen recordings or window captures.',
+  keywords: ['interview', 'coding', 'AI', 'LeetCode', 'technical interview', 'invisible', 'stealth'],
   openGraph: {
-    title: 'BigO — Invisible AI for Technical Interviews',
-    description: 'Solve any coding problem invisibly during your interview.',
+    title: 'BigO | The Invisible AI Assistant',
+    description: 'Real-time code solutions, invisible to every screen recorder.',
     url: 'https://bigo.space',
     siteName: 'BigO',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BigO — Invisible AI for Technical Interviews',
-    description: 'Solve any coding problem invisibly during your interview.',
+    title: 'BigO | The Invisible AI Assistant',
+    description: 'Real-time code solutions, invisible to every screen recorder.',
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider afterSignOutUrl="/" signInFallbackRedirectUrl="/dashboard" signUpFallbackRedirectUrl="/dashboard">
-      <html lang="en" className={`${jakarta.variable} ${geistMono.variable} h-full antialiased`}>
-        <body className="min-h-full flex flex-col bg-white text-[#0b0b0f]">{children}</body>
+      <html lang="en" className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}>
+        <head>
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+          />
+        </head>
+        <body className="min-h-full flex flex-col bg-surface text-on-surface">{children}</body>
       </html>
     </ClerkProvider>
   )

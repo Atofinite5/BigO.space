@@ -1,33 +1,66 @@
-const STEPS = [
-  { n: '01', title: 'Download BigO', body: 'Install the macOS app. It hides from Mission Control, the Dock, and every screen-recording tool the moment it launches.' },
-  { n: '02', title: 'Screenshot the problem', body: 'Press ⌘H to capture your screen. Works on LeetCode, HackerRank, CoderPad — any platform your interviewer uses.' },
-  { n: '03', title: 'Get the answer', body: 'Press ⌘Enter. The AI reads the problem, picks the optimal algorithm, and writes a full solution with complexity analysis.' },
-  { n: '04', title: 'Copy and pass', body: 'One click copies the code. Toggle visibility with ⌘B. The window stays 100% transparent to screen capture.' },
-]
-
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="relative px-5 py-24 sm:py-32 bg-gradient-to-b from-lilac-50 to-white rounded-[40px] mx-3 sm:mx-5">
-      <div className="max-w-6xl mx-auto">
-        <div className="max-w-2xl">
-          <span className="text-xs uppercase tracking-widest text-accent font-semibold">How it works</span>
-          <h2 className="display text-4xl sm:text-6xl text-ink mt-4">
-            From problem to<br />solution in seconds
-          </h2>
-          <p className="mt-5 text-ink/50 text-base sm:text-lg leading-relaxed">
-            Four steps, under ten seconds. No setup rituals, no tells — just the answer
-            on a card only you can see.
-          </p>
+    <section id="architecture" className="py-16 bg-surface-container-low border-y border-outline-variant relative overflow-hidden">
+      <div className="grid-pattern absolute inset-0" />
+      <div className="max-w-[1280px] mx-auto px-6 relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-semibold text-on-surface mb-3 tracking-tight">System Architecture</h2>
+          <p className="text-sm text-on-surface-variant">A peek under the hood of the stealth execution layer.</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-14">
-          {STEPS.map((s) => (
-            <div key={s.n} className="glass rounded-3xl p-6 hover:-translate-y-1 transition-transform">
-              <span className="text-sm font-bold text-accent">{s.n}</span>
-              <h3 className="text-lg font-bold text-ink mt-4 mb-2">{s.title}</h3>
-              <p className="text-ink/50 text-sm leading-relaxed">{s.body}</p>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-4">
+          {/* Step 1 — Input */}
+          <div className="flex-1 w-full space-y-6">
+            <div className="bg-surface border border-outline-variant p-6 rounded relative">
+              <div className="absolute -top-3 left-4 bg-on-surface text-surface px-3 py-[2px] font-sys text-[10px] uppercase tracking-tighter">Input Layer</div>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="material-symbols-outlined text-primary">screen_search_desktop</span>
+                <span className="font-sys text-xs tracking-wider">BUFFER SCRAPER</span>
+              </div>
+              <div className="h-1 bg-outline-variant rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full" style={{ width: '66%', animation: 'shimmer-w 2s ease-in-out infinite alternate' }} />
+              </div>
             </div>
-          ))}
+            <p className="text-center font-sys text-xs opacity-60 tracking-wider">RAW DATA COLLECTION</p>
+          </div>
+
+          <span className="material-symbols-outlined text-outline-variant hidden md:block">trending_flat</span>
+
+          {/* Step 2 — Core */}
+          <div className="flex-1 w-full space-y-6">
+            <div className="bg-surface border-2 border-primary p-6 rounded relative shadow-[0_0_20px_rgba(144,77,0,0.1)]">
+              <div className="absolute -top-3 left-4 bg-primary text-on-primary px-3 py-[2px] font-sys text-[10px] uppercase tracking-tighter">Core Logic</div>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="material-symbols-outlined text-primary">memory</span>
+                <span className="font-sys text-xs tracking-wider">BIGO INFERENCE ENGINE</span>
+              </div>
+              <div className="flex justify-between items-end gap-1 h-8">
+                <div className="w-full bg-primary h-1/2" />
+                <div className="w-full bg-primary h-full" />
+                <div className="w-full bg-primary h-2/3" />
+                <div className="w-full bg-primary h-5/6" />
+              </div>
+            </div>
+            <p className="text-center font-sys text-xs text-primary font-bold tracking-wider">REAL-TIME ANALYSIS</p>
+          </div>
+
+          <span className="material-symbols-outlined text-outline-variant hidden md:block">trending_flat</span>
+
+          {/* Step 3 — Stealth UI */}
+          <div className="flex-1 w-full space-y-6">
+            <div className="bg-surface border border-outline-variant p-6 rounded relative">
+              <div className="absolute -top-3 left-4 bg-tertiary text-on-tertiary px-3 py-[2px] font-sys text-[10px] uppercase tracking-tighter">Stealth UI</div>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="material-symbols-outlined text-tertiary">layers</span>
+                <span className="font-sys text-xs tracking-wider">OVERLAY WRITER</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-tertiary animate-pulse" />
+                <div className="h-1 bg-tertiary/20 flex-1 rounded" />
+              </div>
+            </div>
+            <p className="text-center font-sys text-xs opacity-60 tracking-wider">CLIENT-SIDE RENDERING</p>
+          </div>
         </div>
       </div>
     </section>
