@@ -32,7 +32,7 @@ export function CheckoutButton({ annual }: Props) {
     <button
       onClick={handleCheckout}
       disabled={loading}
-      className="w-full py-3.5 rounded-xl bg-white text-black font-semibold text-sm
+      className="w-full py-3.5 rounded-full bg-white text-ink font-semibold text-sm
         hover:bg-white/90 transition-all active:scale-[0.98]
         disabled:opacity-50 disabled:cursor-not-allowed"
     >
