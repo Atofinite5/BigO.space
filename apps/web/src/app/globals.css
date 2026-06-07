@@ -1,36 +1,107 @@
 @import "tailwindcss";
 
+/* ── Design tokens (Kenter-inspired: lilac, glass, bold display) ──────────── */
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #ffffff;
+  --foreground: #0b0b0f;
+  --ink: #0b0b0f;          /* near-black for hero + headings */
+  --lilac-50: #f3f0ff;
+  --lilac-100: #ece7ff;
+  --lilac-200: #d9ceff;
+  --lilac-300: #c3b1ff;
+  --lilac-400: #a98cff;
+  --lilac-500: #8b5cff;
+  --accent: #7c4dff;
+  --pink: #ff3b6b;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-lilac-50: var(--lilac-50);
+  --color-lilac-100: var(--lilac-100);
+  --color-lilac-200: var(--lilac-200);
+  --color-lilac-300: var(--lilac-300);
+  --color-lilac-400: var(--lilac-400);
+  --color-lilac-500: var(--lilac-500);
+  --color-accent: var(--accent);
+  --color-pink: var(--pink);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body {
-  background: #000;
-  color: #fff;
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+html, body {
+  background: #ffffff;
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+/* Display headings — tight tracking, heavy weight (the Kenter look) */
+.display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
 
-/* Selection */
-::selection { background: rgba(255,255,255,0.15); }
+/* Lilac ambient page glow behind sections */
+.page-glow {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(168, 140, 255, 0.18), transparent 70%),
+    radial-gradient(40% 40% at 85% 10%, rgba(124, 77, 255, 0.12), transparent 70%);
+}
+
+/* Glass card — frosted, soft border, used for stat + feature cards */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(11, 11, 15, 0.06);
+  box-shadow: 0 10px 40px -12px rgba(124, 77, 255, 0.18);
+}
+
+/* Floating tag pill (the "Strategic" / "Faster" bubbles) */
+.tag-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.tag-pill::before {
+  content: "";
+  position: absolute;
+  width: 14px; height: 14px;
+  transform: rotate(45deg);
+}
+
+/* Pill button (Let's Contact style) */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.pill-btn:active { transform: scale(0.97); }
+
+/* Scrollbar + selection */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--lilac-200); border-radius: 4px; }
+::selection { background: var(--lilac-200); color: var(--ink); }
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-floaty { animation: floaty 5s ease-in-out infinite; }
