@@ -1,8 +1,16 @@
 import Stripe from 'stripe'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-04-10',
-})
+// Lazily construct the client — instantiating at import time crashes the build
+// when STRIPE_SECRET_KEY isn't present (e.g. preview deploys).
+let _stripe: Stripe | null = null
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
+      apiVersion: '2024-04-10',
+    })
+  }
+  return _stripe
+}
 
 export const PLANS = {
   pro_monthly: {
