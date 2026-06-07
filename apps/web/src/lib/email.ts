@@ -1,6 +1,10 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazily construct the client so a missing key at build/import time doesn't
+// crash the build (the key is only needed when an email is actually sent).
+function getResend(): Resend {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 export async function sendLicenseEmail(opts: {
   to: string
@@ -10,7 +14,7 @@ export async function sendLicenseEmail(opts: {
 }) {
   const { to, licenseKey, plan, annual } = opts
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: 'BigO <noreply@bigo.space>',
     to,
     subject: '🎉 Your BigO license key',
