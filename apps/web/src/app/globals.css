@@ -1,107 +1,90 @@
 @import "tailwindcss";
 
-/* ── Design tokens (Kenter-inspired: lilac, glass, bold display) ──────────── */
-:root {
-  --background: #ffffff;
-  --foreground: #0b0b0f;
-  --ink: #0b0b0f;          /* near-black for hero + headings */
-  --lilac-50: #f3f0ff;
-  --lilac-100: #ece7ff;
-  --lilac-200: #d9ceff;
-  --lilac-300: #c3b1ff;
-  --lilac-400: #a98cff;
-  --lilac-500: #8b5cff;
-  --accent: #7c4dff;
-  --pink: #ff3b6b;
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-}
-
+/* ── Material-3 stealth palette (from the provided design) ────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-ink: var(--ink);
-  --color-lilac-50: var(--lilac-50);
-  --color-lilac-100: var(--lilac-100);
-  --color-lilac-200: var(--lilac-200);
-  --color-lilac-300: var(--lilac-300);
-  --color-lilac-400: var(--lilac-400);
-  --color-lilac-500: var(--lilac-500);
-  --color-accent: var(--accent);
-  --color-pink: var(--pink);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --color-surface: #f9f9ff;
+  --color-background: #f9f9ff;
+  --color-surface-bright: #f9f9ff;
+  --color-surface-dim: #d3daef;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f3ff;
+  --color-surface-container: #e9edff;
+  --color-surface-container-high: #e1e8fd;
+  --color-surface-container-highest: #dce2f7;
+  --color-surface-variant: #dce2f7;
+
+  --color-primary: #904d00;
+  --color-primary-container: #ff8c00;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #623200;
+  --color-primary-fixed: #ffdcc3;
+  --color-primary-fixed-dim: #ffb77d;
+  --color-inverse-primary: #ffb77d;
+
+  --color-tertiary: #006e2f;
+  --color-tertiary-container: #1ec35c;
+  --color-tertiary-fixed: #6bff8f;
+  --color-tertiary-fixed-dim: #4ae176;
+  --color-on-tertiary: #ffffff;
+
+  --color-secondary: #705d00;
+  --color-secondary-container: #fcd400;
+
+  --color-inverse-surface: #293040;
+  --color-inverse-on-surface: #edf0ff;
+
+  --color-on-surface: #141b2b;
+  --color-on-surface-variant: #564334;
+  --color-on-background: #141b2b;
+  --color-outline: #897362;
+  --color-outline-variant: #ddc1ae;
+  --color-error: #ba1a1a;
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
 }
 
 * { box-sizing: border-box; }
 
 html, body {
-  background: #ffffff;
-  color: var(--ink);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background: #f9f9ff;
+  color: #141b2b;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Display headings — tight tracking, heavy weight (the Kenter look) */
-.display {
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
+/* System-label / code text uses JetBrains Mono */
+.font-sys { font-family: var(--font-jetbrains), ui-monospace, monospace; }
+
+/* Decorative dot grid */
+.grid-pattern {
+  background-image: radial-gradient(#897362 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.06;
+  transition: transform 0.2s ease-out;
 }
 
-/* Lilac ambient page glow behind sections */
-.page-glow {
-  background:
-    radial-gradient(60% 50% at 50% 0%, rgba(168, 140, 255, 0.18), transparent 70%),
-    radial-gradient(40% 40% at 85% 10%, rgba(124, 77, 255, 0.12), transparent 70%);
+.mac-shadow { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15); }
+
+/* Material Symbols base */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Glass card — frosted, soft border, used for stat + feature cards */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(11, 11, 15, 0.06);
-  box-shadow: 0 10px 40px -12px rgba(124, 77, 255, 0.18);
-}
-
-/* Floating tag pill (the "Strategic" / "Faster" bubbles) */
-.tag-pill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0.4rem 1rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.tag-pill::before {
-  content: "";
-  position: absolute;
-  width: 14px; height: 14px;
-  transform: rotate(45deg);
-}
-
-/* Pill button (Let's Contact style) */
-.pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  border-radius: 999px;
-  font-weight: 600;
-  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
-}
-.pill-btn:active { transform: scale(0.97); }
-
-/* Scrollbar + selection */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--lilac-200); border-radius: 4px; }
-::selection { background: var(--lilac-200); color: var(--ink); }
+::-webkit-scrollbar-thumb { background: #ddc1ae; border-radius: 4px; }
+::selection { background: #ffdcc3; color: #2f1500; }
 
-@keyframes floaty {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-.animate-floaty { animation: floaty 5s ease-in-out infinite; }
+@keyframes shimmer-w { 0% { width: 10%; } 100% { width: 85%; } }
