@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth, currentUser } from '@clerk/nextjs/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 
 export async function POST() {
   const { userId } = await auth()
@@ -12,12 +12,12 @@ export async function POST() {
   if (!email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
   // Look up Stripe customer by email
-  const customers = await stripe.customers.list({ email, limit: 1 })
+  const customers = await getStripe().customers.list({ email, limit: 1 })
   if (!customers.data.length) {
     return NextResponse.json({ error: 'No billing account found. Purchase a plan first.' }, { status: 404 })
   }
 
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: customers.data[0].id,
     return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
   })
