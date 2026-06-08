@@ -16,11 +16,10 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm">
-          <Link href="#features" className="text-on-surface-variant hover:text-primary transition-colors">Features</Link>
-          <Link href="#architecture" className="text-on-surface-variant hover:text-primary transition-colors">Architecture</Link>
-          {isSignedIn
-            ? <Link href="/dashboard" className="text-primary font-bold border-b-2 border-primary">Dashboard</Link>
-            : <Link href="#cta" className="text-on-surface-variant hover:text-primary transition-colors">Pricing</Link>}
+          <Link href="/#features" className="text-on-surface-variant hover:text-primary transition-colors">Features</Link>
+          <Link href="/#architecture" className="text-on-surface-variant hover:text-primary transition-colors">Architecture</Link>
+          <Link href="/pricing" className="text-on-surface-variant hover:text-primary transition-colors">Pricing</Link>
+          {isSignedIn && <Link href="/dashboard" className="text-primary font-bold border-b-2 border-primary">Dashboard</Link>}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -47,7 +46,7 @@ export function Navbar() {
         <div className="md:hidden bg-surface border-b border-outline-variant px-6 py-4 flex flex-col gap-3 text-sm">
           <Link href="#features" onClick={() => setOpen(false)} className="text-on-surface-variant">Features</Link>
           <Link href="#architecture" onClick={() => setOpen(false)} className="text-on-surface-variant">Architecture</Link>
-          <Link href="#cta" onClick={() => setOpen(false)} className="text-on-surface-variant">Pricing</Link>
+          <Link href="/pricing" onClick={() => setOpen(false)} className="text-on-surface-variant">Pricing</Link>
           {!isSignedIn && <Link href="/sign-in" className="text-primary font-bold">Sign In</Link>}
         </div>
       )}
