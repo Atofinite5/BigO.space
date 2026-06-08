@@ -16,7 +16,7 @@ export function Footer() {
             <p className="font-bold font-sys text-xs uppercase tracking-wider text-on-surface">Product</p>
             <ul className="space-y-2 text-sm">
               <li><Link href="#features" className="text-on-surface-variant hover:text-primary transition-all">Features</Link></li>
-              <li><Link href="#cta" className="text-on-surface-variant hover:text-primary transition-all">Pricing</Link></li>
+              <li><Link href="/pricing" className="text-on-surface-variant hover:text-primary transition-all">Pricing</Link></li>
               <li><a href="https://github.com/Atofinite5/BigO.space/releases/latest" className="text-on-surface-variant hover:text-primary transition-all">Download</a></li>
             </ul>
           </div>
