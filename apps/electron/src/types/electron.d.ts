@@ -63,6 +63,16 @@ export interface ElectronAPI {
   onApiKeyInvalid: (callback: () => void) => () => void
   removeListener: (eventName: string, callback: (...args: any[]) => void) => void
 
+  // Listen & Answer
+  listenGetState: () => Promise<any>
+  listenSet: (on: boolean) => Promise<any>
+  listenToggle: () => Promise<any>
+  listenClear: () => Promise<{ ok: boolean }>
+  listenProcessAudio: (audioBase64: string, mimeType: string) => Promise<{ ok: boolean; error?: string; transcript?: string; answer?: string }>
+  onListenState: (callback: (state: any) => void) => () => void
+  onListenResult: (callback: (r: { ok: boolean; error?: string; transcript?: string; answer?: string }) => void) => () => void
+  onListenToggleHotkey: (callback: () => void) => () => void
+
   // BigO license / auth
   getAuthState: () => Promise<{
     status: "checking" | "unauthenticated" | "invalid_key" | "no_subscription" | "active"

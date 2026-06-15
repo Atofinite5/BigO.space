@@ -15,6 +15,7 @@ import paymentRoutes from './modules/payment/payment.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import webhookRoutes from './modules/webhook/webhook.routes';
 import licenseRoutes from './modules/license/license.routes';
+import aiProxyRoutes from './modules/ai-proxy/ai-proxy.routes';
 
 const app = express();
 
@@ -48,7 +49,10 @@ app.use('/api/webhooks', express.raw({ type: '*/*', limit: '1mb' }));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // JSON Body Parser (all other routes)
+// /api/ai/* needs a higher limit — screenshots are base64-encoded PNGs
+// (~300KB each × 4 = ~1.2MB before base64 overhead → 10mb is safe).
 // ─────────────────────────────────────────────────────────────────────────────
+app.use('/api/ai', express.json({ limit: '10mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -79,6 +83,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/licenses', licenseRoutes);    // Desktop app license validation
+app.use('/api/ai', aiProxyRoutes);          // Groq proxy — free tier AI for desktop app
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 404 Catch-All

@@ -489,6 +489,40 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
     }
   })
 
+  // ── Listen & Answer handlers ──────────────────────────────────────────────
+
+  ipcMain.handle("listen-get-state", () => {
+    return deps.listenHelper?.getState() ?? null
+  })
+
+  ipcMain.handle("listen-set", (_event, on: boolean) => {
+    deps.listenHelper?.setListening(!!on)
+    return deps.listenHelper?.getState() ?? null
+  })
+
+  ipcMain.handle("listen-toggle", () => {
+    deps.listenHelper?.toggleListening()
+    return deps.listenHelper?.getState() ?? null
+  })
+
+  ipcMain.handle("listen-clear", () => {
+    deps.listenHelper?.clear()
+    return { ok: true }
+  })
+
+  ipcMain.handle(
+    "listen-process-audio",
+    async (_event, payload: { audioBase64: string; mimeType: string }) => {
+      if (!deps.listenHelper) return { ok: false, error: "Listen not available" }
+      const result = await deps.listenHelper.processAudio(payload.audioBase64, payload.mimeType)
+      const mainWindow = deps.getMainWindow()
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("listen-result", result)
+      }
+      return result
+    }
+  )
+
   // ── BigO Auth / License handlers ──────────────────────────────────────────
 
   ipcMain.handle("auth-get-state", async () => {

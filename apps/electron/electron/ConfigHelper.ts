@@ -9,7 +9,7 @@ import axios from "axios"
 interface Config {
   // ── AI provider settings ────────────────────────────────────────────────
   apiKey: string;
-  apiProvider: "openai" | "gemini" | "anthropic" | "xai" | "groq";
+  apiProvider: "openai" | "gemini" | "anthropic" | "xai" | "groq" | "bigo-free";
   extractionModel: string;
   solutionModel: string;
   debuggingModel: string;
@@ -86,7 +86,7 @@ export class ConfigHelper extends EventEmitter {
   /**
    * Validate and sanitize model selection to ensure only allowed models are used
    */
-  private sanitizeModelSelection(model: string, provider: "openai" | "gemini" | "anthropic" | "xai" | "groq"): string {
+  private sanitizeModelSelection(model: string, provider: "openai" | "gemini" | "anthropic" | "xai" | "groq" | "bigo-free"): string {
     if (provider === "openai") {
       // Only allow gpt-4o and gpt-4o-mini for OpenAI
       const allowedModels = ['gpt-4o', 'gpt-4o-mini'];
@@ -135,8 +135,8 @@ export class ConfigHelper extends EventEmitter {
         const config = JSON.parse(configData);
         
         // Ensure apiProvider is a valid value
-        if (config.apiProvider !== "openai" && config.apiProvider !== "gemini"  && config.apiProvider !== "anthropic" && config.apiProvider !== "xai" && config.apiProvider !== "groq") {
-          config.apiProvider = "gemini"; // Default to Gemini if invalid
+        if (config.apiProvider !== "openai" && config.apiProvider !== "gemini" && config.apiProvider !== "anthropic" && config.apiProvider !== "xai" && config.apiProvider !== "groq" && config.apiProvider !== "bigo-free") {
+          config.apiProvider = "bigo-free"; // Default to bigo-free if invalid
         }
         
         // One-time migration: a previous build defaulted Groq debug to a
@@ -241,6 +241,11 @@ export class ConfigHelper extends EventEmitter {
           updates.extractionModel = "meta-llama/llama-4-scout-17b-16e-instruct";
           updates.solutionModel = "llama-3.3-70b-versatile";
           updates.debuggingModel = "meta-llama/llama-4-scout-17b-16e-instruct";
+        } else if (updates.apiProvider === "bigo-free") {
+          // bigo-free: models are fixed server-side, these are just labels
+          updates.extractionModel = "llama-4-scout (vision)";
+          updates.solutionModel = "llama-3.3-70b";
+          updates.debuggingModel = "llama-4-scout (vision)";
         } else {
           updates.extractionModel = "gemini-2.0-flash";
           updates.solutionModel = "gemini-2.0-flash";
@@ -290,7 +295,7 @@ export class ConfigHelper extends EventEmitter {
   /**
    * Validate the API key format
    */
-  public isValidApiKeyFormat(apiKey: string, provider?: "openai" | "gemini" | "anthropic" | "xai" | "groq"): boolean {
+  public isValidApiKeyFormat(apiKey: string, provider?: "openai" | "gemini" | "anthropic" | "xai" | "groq" | "bigo-free"): boolean {
     // If provider is not specified, attempt to auto-detect
     if (!provider) {
       if (apiKey.trim().startsWith('sk-')) {
