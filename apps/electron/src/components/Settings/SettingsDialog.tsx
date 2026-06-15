@@ -267,11 +267,27 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
   // disable it again when closed so clicks don't exit fullscreen apps.
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
+
+    // Mark the body so App.tsx's click-through tracker globally suspends
+    // its mousemove logic — guarantees the dialog stays interactive.
+    if (newOpen) {
+      document.body.dataset.settingsOpen = "true";
+    } else {
+      delete document.body.dataset.settingsOpen;
+    }
+
     window.electronAPI.setWindowFocusable(newOpen);
-    // While Settings is open, force the window to accept clicks/typing.
-    // The click-through layer can leave the API-Key input unable to receive
-    // paste/typing events otherwise. Reset to default on close.
+    // Force click-through OFF immediately on open; restore on close.
     window.electronAPI.setIgnoreMouseEvents?.(!newOpen);
+
+    // When opening, focus the dialog after Radix mounts it.
+    if (newOpen) {
+      requestAnimationFrame(() => {
+        const input = document.querySelector<HTMLInputElement>('input#apiKey')
+        if (input) input.focus()
+      })
+    }
+
     if (onOpenChange && newOpen !== externalOpen) {
       onOpenChange(newOpen);
     }
