@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, shell, desktopCapturer, type BrowserWindowConstructorOptions } from "electron"
+import { app, BrowserWindow, Menu, screen, shell, desktopCapturer, type BrowserWindowConstructorOptions } from "electron"
 import path from "path"
 import fs from "fs"
 import { initializeIpcHandlers } from "./ipcHandlers"
@@ -639,6 +639,24 @@ async function initializeApp() {
     app.setPath('cache', cachePath)
       
     loadEnvVariables()
+
+    // Install a minimal application menu. Without this, macOS has no Edit menu
+    // installed and Cmd+C / Cmd+V / Cmd+X / Cmd+A don't reach the renderer
+    // (paste-into-Settings doesn't work). The menu is hidden from view (the
+    // window has its own UI) but the OS still routes the standard edit
+    // accelerators through it.
+    Menu.setApplicationMenu(Menu.buildFromTemplate([
+      { role: "appMenu" },
+      {
+        label: "Edit",
+        submenu: [
+          { role: "undo" }, { role: "redo" }, { type: "separator" },
+          { role: "cut" }, { role: "copy" }, { role: "paste" },
+          { role: "selectAll" },
+        ],
+      },
+      { role: "windowMenu" },
+    ]))
 
     // ── BigO auth: validate license on startup ──────────────────────────────
     authHelper.initialize().then((authState) => {
