@@ -39,6 +39,35 @@ export interface HealthResponse {
   latencyMs: number
 }
 
+// ── bigo-free AI proxy types ──────────────────────────────────────────────────
+
+export interface AiSolveRequest {
+  licenseKey?: string | null
+  deviceId: string
+  systemPrompt: string
+  userPrompt: string
+  /** Raw base64 PNG screenshots (no data-URL prefix) */
+  screenshots?: string[]
+  mimeType?: 'image/png' | 'image/jpeg'
+}
+
+export interface AiSolveResponse {
+  content: string
+}
+
+export interface AiTranscribeRequest {
+  licenseKey?: string | null
+  deviceId: string
+  /** Raw base64 audio (webm/wav/mp3) */
+  audioBase64: string
+  filename?: string
+  language?: string
+}
+
+export interface AiTranscribeResponse {
+  transcript: string
+}
+
 // ── Client ───────────────────────────────────────────────────────────────────
 
 async function post<T>(path: string, body: unknown, timeoutMs = 10_000): Promise<T> {
@@ -140,5 +169,24 @@ export const bigoApi = {
     } catch {
       return { status: 'error', latencyMs: Date.now() - start }
     }
+  },
+
+  // ── bigo-free AI proxy ─────────────────────────────────────────────────────
+
+  /**
+   * Route an AI solve request through the backend Groq proxy.
+   * Used when apiProvider === 'bigo-free' so users need no API key.
+   * Screenshots (if any) trigger the vision model automatically.
+   */
+  async solveWithAI(req: AiSolveRequest): Promise<AiSolveResponse> {
+    return post<AiSolveResponse>('/api/ai/solve', req, 60_000)
+  },
+
+  /**
+   * Transcribe audio through the backend Groq Whisper proxy.
+   * Used by ListenHelper when apiProvider === 'bigo-free'.
+   */
+  async transcribeAudio(req: AiTranscribeRequest): Promise<AiTranscribeResponse> {
+    return post<AiTranscribeResponse>('/api/ai/transcribe', req, 30_000)
   },
 }

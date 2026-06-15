@@ -261,6 +261,19 @@ export class ShortcutsHelper {
       }
     })
 
+    // Cmd+Shift+L: toggle Listen & Answer mode (captures interviewer audio →
+    // transcribes → bullet answer). The renderer reacts to the broadcast
+    // listen-state to start/stop system-audio capture.
+    globalShortcut.register("CommandOrControl+Shift+L", () => {
+      console.log("Command/Ctrl + Shift + L pressed. Toggling Listen mode.")
+      const on = this.deps.listenHelper?.toggleListening()
+      const mainWindow = this.deps.getMainWindow()
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("listen-toggle-hotkey")
+        if (on && !this.deps.isVisible()) this.deps.toggleMainWindow()
+      }
+    })
+
     globalShortcut.register("CommandOrControl+Q", () => {
       console.log("Command/Ctrl + Q pressed. Quitting application.")
       app.quit()
