@@ -220,6 +220,13 @@ function App() {
         setIgnore(false)
         return
       }
+      // While Settings dialog is open (data-settings-open="true" on <body>),
+      // the entire window is interactive — no click-through, no matter where
+      // the cursor is. This makes the API-key field bulletproofly clickable.
+      if (document.body.dataset.settingsOpen === "true") {
+        setIgnore(false)
+        return
+      }
       const el = document.elementFromPoint(e.clientX, e.clientY)
       setIgnore(isTransparent(el))
     }
