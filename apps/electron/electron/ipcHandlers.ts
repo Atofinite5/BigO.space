@@ -89,10 +89,30 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
   // opens/closes so text inputs work without permanently making the window
   // focusable (which would let clicks steal focus from fullscreen apps).
   ipcMain.on("set-window-focusable", (event, focusable: boolean) => {
-    const win = event.sender ? require("electron").BrowserWindow.fromWebContents(event.sender) : null;
-    if (win && !win.isDestroyed()) {
-      win.setFocusable(focusable);
-      if (focusable) win.focus();
+    const electron = require("electron");
+    const win = event.sender ? electron.BrowserWindow.fromWebContents(event.sender) : null;
+    if (!win || win.isDestroyed()) return;
+
+    win.setFocusable(focusable);
+
+    if (focusable) {
+      // Step the always-on-top level DOWN from "screen-saver" to "floating".
+      // macOS refuses to make a window at the screen-saver level the key
+      // (focused) window, so Cmd+V / typing have nowhere to land → system
+      // bonk. "floating" still keeps it above the meeting/IDE but lets
+      // it become the key window so inputs accept keys.
+      win.setAlwaysOnTop(true, "floating", 1);
+
+      // Make BigO the active app, focus the window, focus the webContents
+      // so the React input element actually receives keystrokes.
+      try { electron.app.focus({ steal: true }); } catch { /* noop */ }
+      win.show();
+      win.focus();
+      win.webContents.focus();
+    } else {
+      // Settings closed → restore the stealth on-top level so we float over
+      // fullscreen meetings again. Re-disabling focusable is intentional.
+      win.setAlwaysOnTop(true, "screen-saver", 1);
     }
   })
 
