@@ -78,7 +78,15 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
   // element. When false, transparent areas of the window pass clicks through
   // to whatever is underneath (so the tool doesn't pull the user out of
   // fullscreen apps when clicking on empty space).
+  //
+  // When Settings is open we set inputLockActive=true and ignore any
+  // renderer requests to re-enable click-through. Otherwise the App.tsx
+  // mousemove listener would flip click-through ON the moment the cursor
+  // strays from the input → the API-key field would silently lose focus
+  // and the next keystroke would bonk.
+  let inputLockActive = false
   ipcMain.on("set-ignore-mouse-events", (event, ignore: boolean) => {
+    if (inputLockActive && ignore) return  // hard-ignore while Settings open
     const win = event.sender ? require("electron").BrowserWindow.fromWebContents(event.sender) : null;
     if (win && !win.isDestroyed()) {
       win.setIgnoreMouseEvents(!!ignore, { forward: true });
@@ -96,6 +104,12 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
     win.setFocusable(focusable);
 
     if (focusable) {
+      // ENGAGE input lock — App.tsx's mousemove listener will keep trying to
+      // re-enable click-through; the set-ignore-mouse-events handler above
+      // hard-ignores those requests while inputLockActive is true.
+      inputLockActive = true;
+      win.setIgnoreMouseEvents(false, { forward: true });
+
       // Step the always-on-top level DOWN from "screen-saver" to "floating".
       // macOS refuses to make a window at the screen-saver level the key
       // (focused) window, so Cmd+V / typing have nowhere to land → system
@@ -110,8 +124,8 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
       win.focus();
       win.webContents.focus();
     } else {
-      // Settings closed → restore the stealth on-top level so we float over
-      // fullscreen meetings again. Re-disabling focusable is intentional.
+      // Settings closed → release the lock + restore stealth on-top level.
+      inputLockActive = false;
       win.setAlwaysOnTop(true, "screen-saver", 1);
     }
   })
