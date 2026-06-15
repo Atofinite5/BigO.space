@@ -248,7 +248,12 @@ async function createWindow(): Promise<void> {
     backgroundColor: "#00000000",
     focusable: false,
     skipTaskbar: true,
-    type: "panel",
+    // NOTE: we deliberately do NOT use type: "panel" on macOS. NSPanel is
+    // non-activating by design — even setFocusable(true) cannot make it the
+    // key window, so Cmd+V / typing have no destination (system bonk).
+    // Stealth (invisible to capture, hidden from Mission Control, sits above
+    // meetings) is provided by setContentProtection + setHiddenInMissionControl
+    // + setAlwaysOnTop, NOT by the panel type.
     paintWhenInitiallyHidden: true,
     titleBarStyle: "hidden",
     enableLargerThanScreen: true,
