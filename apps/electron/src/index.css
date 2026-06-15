@@ -896,3 +896,65 @@ html[data-theme="dark"] .yen-corner-gear:hover {
   border-color: rgba(255, 255, 255, 0.20);
 }
 .yen-corner-gear:active { transform: rotate(30deg) scale(0.92); }
+
+/* ── Listen & Answer panel ─────────────────────────────────────────────── */
+.listen-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 460px;
+  padding: 14px 16px;
+}
+.listen-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.listen-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.listen-dot {
+  width: 8px; height: 8px; border-radius: 999px; flex: none;
+}
+.listen-dot.is-live { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); animation: listen-pulse 1.6s infinite; }
+.listen-dot.is-busy { background: #f59e0b; animation: listen-pulse 0.9s infinite; }
+@keyframes listen-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+.listen-card__actions { display: flex; gap: 6px; }
+.listen-btn {
+  font-size: 11px; padding: 3px 10px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.14); background: transparent;
+  color: rgba(255,255,255,0.7); cursor: pointer; transition: all .15s ease;
+}
+.listen-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.listen-btn--stop { color: #f87171; border-color: rgba(248,113,113,0.3); }
+.listen-btn--stop:hover { background: rgba(248,113,113,0.12); }
+.listen-card__status {
+  font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.4;
+}
+.listen-card__q {
+  font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.45;
+  padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.listen-card__q-label {
+  display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: rgba(255,255,255,0.35); margin-right: 8px;
+}
+.listen-card__a { display: flex; flex-direction: column; gap: 4px; }
+.listen-lead { font-size: 13px; font-weight: 600; line-height: 1.45; color: #fff; margin: 0 0 2px; }
+.listen-bullet { font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,0.82); margin: 0; padding-left: 2px; }
+.listen-card__empty { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.5; padding: 4px 0; }
+.listen-card__history {
+  margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.listen-card__history-item { font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.4; }

@@ -34,6 +34,8 @@ const envSchema = z.object({
   // AI Providers (optional — stubs used if absent)
   OPENAI_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
+  // Groq — server-side key for bigo-free proxy (/api/ai/solve, /api/ai/transcribe)
+  GROQ_API_KEY: z.string().optional(),
 
   // Session behaviour
   SESSION_HEARTBEAT_INTERVAL_SECONDS: z
