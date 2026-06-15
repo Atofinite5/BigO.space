@@ -237,6 +237,29 @@ const electronAPI = {
     ipcRenderer.on("yen-disabled-hint", sub)
     return () => ipcRenderer.removeListener("yen-disabled-hint", sub)
   },
+
+  // Listen & Answer controls
+  listenGetState: () => ipcRenderer.invoke("listen-get-state"),
+  listenSet: (on: boolean) => ipcRenderer.invoke("listen-set", on),
+  listenToggle: () => ipcRenderer.invoke("listen-toggle"),
+  listenClear: () => ipcRenderer.invoke("listen-clear"),
+  listenProcessAudio: (audioBase64: string, mimeType: string) =>
+    ipcRenderer.invoke("listen-process-audio", { audioBase64, mimeType }),
+  onListenState: (callback: (state: any) => void) => {
+    const sub = (_: any, s: any) => callback(s)
+    ipcRenderer.on("listen-state", sub)
+    return () => ipcRenderer.removeListener("listen-state", sub)
+  },
+  onListenResult: (callback: (r: { ok: boolean; error?: string; transcript?: string; answer?: string }) => void) => {
+    const sub = (_: any, r: any) => callback(r)
+    ipcRenderer.on("listen-result", sub)
+    return () => ipcRenderer.removeListener("listen-result", sub)
+  },
+  onListenToggleHotkey: (callback: () => void) => {
+    const sub = () => callback()
+    ipcRenderer.on("listen-toggle-hotkey", sub)
+    return () => ipcRenderer.removeListener("listen-toggle-hotkey", sub)
+  },
   // Memory (pgvector) controls
   getMemoryStatus: () => ipcRenderer.invoke("memory-status"),
   testMemoryConnection: (connectionString?: string) =>

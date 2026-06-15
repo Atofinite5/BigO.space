@@ -8,6 +8,7 @@ import { app, BrowserWindow, dialog } from "electron"
 import { OpenAI } from "openai"
 import { configHelper } from "./ConfigHelper"
 import { authHelper } from "./AuthHelper"
+import { bigoApi } from "./BigOApiClient"
 import Anthropic from '@anthropic-ai/sdk';
 import {
   initMemory,
@@ -182,6 +183,14 @@ export class ProcessingHelper {
           this.groqApiKey = null;
           console.warn("No API key available, Groq client not initialized");
         }
+      } else if (config.apiProvider === "bigo-free") {
+        // bigo-free: server-side Groq key proxied through BigO backend.
+        // No user API key required — clears all local clients.
+        this.openaiClient = null;
+        this.geminiApiKey = null;
+        this.anthropicClient = null;
+        this.groqApiKey = null;
+        console.log("bigo-free provider active — using backend Groq proxy");
       }
     } catch (error) {
       console.error("Failed to initialize AI client:", error);
@@ -378,6 +387,7 @@ Space complexity: O(...) — [reason]
       case "gemini": return "Gemini";
       case "anthropic": return "Anthropic";
       case "groq": return "Groq";
+      case "bigo-free": return "BigO (Free)";
       default: return String(config.apiProvider || "AI");
     }
   }
@@ -447,22 +457,25 @@ Space complexity: O(...) — [reason]
     // First verify we have a valid AI client / API key for the active provider.
     // Covers all five providers (openai, xai, gemini, anthropic, groq) so the
     // renderer reliably gets API_KEY_INVALID and opens the Settings dialog.
+    // bigo-free is exempt — it uses the backend proxy, no local key needed.
     const provider = config.apiProvider;
     const needsOpenAIClient = provider === "openai" || provider === "xai";
     let providerKeyMissing = false;
 
-    if (needsOpenAIClient && !this.openaiClient) {
-      this.initializeAIClient();
-      providerKeyMissing = !this.openaiClient;
-    } else if (provider === "gemini" && !this.geminiApiKey) {
-      this.initializeAIClient();
-      providerKeyMissing = !this.geminiApiKey;
-    } else if (provider === "anthropic" && !this.anthropicClient) {
-      this.initializeAIClient();
-      providerKeyMissing = !this.anthropicClient;
-    } else if (provider === "groq" && !this.groqApiKey) {
-      this.initializeAIClient();
-      providerKeyMissing = !this.groqApiKey;
+    if (provider !== "bigo-free") {
+      if (needsOpenAIClient && !this.openaiClient) {
+        this.initializeAIClient();
+        providerKeyMissing = !this.openaiClient;
+      } else if (provider === "gemini" && !this.geminiApiKey) {
+        this.initializeAIClient();
+        providerKeyMissing = !this.geminiApiKey;
+      } else if (provider === "anthropic" && !this.anthropicClient) {
+        this.initializeAIClient();
+        providerKeyMissing = !this.anthropicClient;
+      } else if (provider === "groq" && !this.groqApiKey) {
+        this.initializeAIClient();
+        providerKeyMissing = !this.groqApiKey;
+      }
     }
 
     if (providerKeyMissing) {
@@ -984,8 +997,42 @@ Include constraints and examples whenever the screenshots contain them — they 
             error: error.response?.data?.error?.message || "Failed to process with Groq API. Please check your API key or try again later."
           };
         }
+      } else if (config.apiProvider === "bigo-free") {
+        // ── bigo-free: extraction via backend Groq proxy (vision) ────────────
+        try {
+          const systemPrompt = `Extract the coding/MCQ problem from the screenshot(s). If multiple images, combine them into one coherent problem. Return JSON ONLY (no markdown fences, no preamble) with this exact shape:
+{
+  "question": "full problem statement, cleaned up",
+  "options": ["MCQ options if any, else []"],
+  "topic": "1-3 word topic, e.g. 'graph traversal'",
+  "type": "mcq" | "coding",
+  "constraints": "input limits / value ranges / time-memory limits / special rules verbatim. Empty string if none.",
+  "examples": [{"input": "verbatim", "output": "verbatim", "explanation": "optional"}]
+}`;
+          const userPrompt = `Extract the problem from these ${imageDataList.length} screenshot(s). Combine all images into one problem. User language: ${language}. Return ONLY the JSON object specified by the system message — include constraints and examples whenever the screenshots contain them.`;
+
+          const cfg = configHelper.loadConfig();
+          const result = await bigoApi.solveWithAI({
+            licenseKey: cfg.licenseKey ?? null,
+            deviceId: authHelper.getDeviceId(),
+            systemPrompt,
+            userPrompt,
+            screenshots: imageDataList,
+            mimeType: "image/png",
+          });
+
+          problemInfo = this.parseLooseJSON(result.content);
+        } catch (error: any) {
+          console.error("[bigo-free] extraction error:", error);
+          return {
+            success: false,
+            error: error.message?.includes("Rate limit")
+              ? "Free tier rate limit reached. Try again in a moment."
+              : "Failed to process screenshots via BigO free tier. Check your connection."
+          };
+        }
       }
-      
+
       // Update the user on progress
       if (mainWindow) {
         mainWindow.webContents.send("processing-status", {
@@ -1571,8 +1618,29 @@ Now solve the new problem with these requirements:
             error: error.response?.data?.error?.message || "Failed to generate solution with Groq API. Please check your API key or try again later."
           };
         }
+      } else if (config.apiProvider === "bigo-free") {
+        // ── bigo-free: solution via backend Groq proxy (text) ────────────────
+        try {
+          const cfg = configHelper.loadConfig();
+          const result = await bigoApi.solveWithAI({
+            licenseKey: cfg.licenseKey ?? null,
+            deviceId: authHelper.getDeviceId(),
+            systemPrompt,
+            userPrompt,
+            // No screenshots for solution step — problem already extracted
+          });
+          responseContent = result.content;
+        } catch (error: any) {
+          console.error("[bigo-free] solution error:", error);
+          return {
+            success: false,
+            error: error.message?.includes("Rate limit")
+              ? "Free tier rate limit reached. Try again in a moment."
+              : "Failed to generate solution via BigO free tier. Check your connection."
+          };
+        }
       }
-      
+
       // ---- Parse structured response -----------------------------------------
 
       let code: string;
@@ -2102,9 +2170,60 @@ If you include code examples, use proper markdown code blocks with language spec
             error: error.response?.data?.error?.message || "Failed to process debug request with Groq API. Please check your API key or try again later."
           };
         }
+      } else if (config.apiProvider === "bigo-free") {
+        // ── bigo-free: debug via backend Groq proxy (vision) ─────────────────
+        try {
+          const debugSystemPrompt = `You are a coding interview assistant. Analyze the provided screenshots which show error messages, incorrect outputs, or test cases. Provide structured debugging help.`;
+          const debugUserPrompt = `
+I'm solving: "${problemInfo.question || problemInfo.problem_statement || "(see screenshots)"}" in ${language}.
+Analyze these ${imageDataList.length} screenshot(s) showing my error or failed test cases and provide:
+
+### Issues Identified
+- List each issue clearly
+
+### Specific Improvements and Corrections
+- List specific code changes needed
+
+### Optimizations
+- Performance improvements if applicable
+
+### Explanation of Changes Needed
+Clear explanation of why changes are needed
+
+### Key Points
+- Summary of the most important takeaways
+
+Use proper markdown code blocks with language specification for any code examples.`;
+
+          if (mainWindow) {
+            mainWindow.webContents.send("processing-status", {
+              message: "Analyzing code and generating debug feedback...",
+              progress: 60
+            });
+          }
+
+          const cfg = configHelper.loadConfig();
+          const result = await bigoApi.solveWithAI({
+            licenseKey: cfg.licenseKey ?? null,
+            deviceId: authHelper.getDeviceId(),
+            systemPrompt: debugSystemPrompt,
+            userPrompt: debugUserPrompt,
+            screenshots: imageDataList,
+            mimeType: "image/png",
+          });
+          debugContent = result.content;
+        } catch (error: any) {
+          console.error("[bigo-free] debug error:", error);
+          return {
+            success: false,
+            error: error.message?.includes("Rate limit")
+              ? "Free tier rate limit reached. Try again in a moment."
+              : "Failed to process debug request via BigO free tier. Check your connection."
+          };
+        }
       }
-      
-      
+
+
       if (mainWindow) {
         mainWindow.webContents.send("processing-status", {
           message: "Debug analysis complete",

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, shell, type BrowserWindowConstructorOptions } from "electron"
+import { app, BrowserWindow, screen, shell, desktopCapturer, type BrowserWindowConstructorOptions } from "electron"
 import path from "path"
 import fs from "fs"
 import { initializeIpcHandlers } from "./ipcHandlers"
@@ -8,6 +8,7 @@ import { ShortcutsHelper } from "./shortcuts"
 import { initAutoUpdater } from "./autoUpdater"
 import { configHelper } from "./ConfigHelper"
 import { YenHelper } from "./YenHelper"
+import { ListenHelper } from "./ListenHelper"
 import { authHelper } from "./AuthHelper"
 import * as dotenv from "dotenv"
 
@@ -66,6 +67,7 @@ const state = {
   shortcutsHelper: null as ShortcutsHelper | null,
   processingHelper: null as ProcessingHelper | null,
   yenHelper: null as YenHelper | null,
+  listenHelper: null as ListenHelper | null,
 
   // View and state management
   view: "queue" as "queue" | "solutions" | "debug",
@@ -115,6 +117,7 @@ export interface IShortcutsHelperDeps {
   getImagePreview: (filepath: string) => Promise<string>
   processingHelper: ProcessingHelper | null
   yenHelper: YenHelper | null
+  listenHelper: ListenHelper | null
   clearQueues: () => void
   setView: (view: "queue" | "solutions" | "debug") => void
   isVisible: () => boolean
@@ -136,6 +139,7 @@ export interface IIpcHandlerDeps {
   getImagePreview: (filepath: string) => Promise<string>
   processingHelper: ProcessingHelper | null
   yenHelper: YenHelper | null
+  listenHelper: ListenHelper | null
   PROCESSING_EVENTS: typeof state.PROCESSING_EVENTS
   takeScreenshot: () => Promise<string>
   getView: () => "queue" | "solutions" | "debug"
@@ -152,6 +156,7 @@ export interface IIpcHandlerDeps {
 function initializeHelpers() {
   state.screenshotHelper = new ScreenshotHelper(state.view)
   state.yenHelper = new YenHelper(getMainWindow)
+  state.listenHelper = new ListenHelper(getMainWindow)
   state.processingHelper = new ProcessingHelper({
     getScreenshotHelper,
     getMainWindow,
@@ -175,6 +180,7 @@ function initializeHelpers() {
     getImagePreview,
     processingHelper: state.processingHelper,
     yenHelper: state.yenHelper,
+    listenHelper: state.listenHelper,
     clearQueues,
     setView,
     isVisible: () => state.isWindowVisible,
@@ -250,6 +256,24 @@ async function createWindow(): Promise<void> {
   }
 
   state.mainWindow = new BrowserWindow(windowSettings)
+
+  // ── Listen feature: auto-grant system-audio capture ──────────────────────
+  // When the renderer calls getDisplayMedia({ audio: true }) for Listen mode,
+  // grant it silently (no picker) and request macOS system-audio loopback so
+  // BigO hears the interviewer through the meeting app. Requires the Screen
+  // Recording permission (macOS 13+).
+  try {
+    state.mainWindow.webContents.session.setDisplayMediaRequestHandler(
+      (_request, callback) => {
+        desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
+          // @ts-ignore — 'loopback' captures macOS system audio (Electron runtime supports it)
+          callback({ video: sources[0], audio: "loopback" })
+        }).catch(() => callback({}))
+      }
+    )
+  } catch (e) {
+    console.warn("[Listen] setDisplayMediaRequestHandler unavailable:", e)
+  }
 
   // Add more detailed logging for window events
   state.mainWindow.webContents.on("did-finish-load", () => {
@@ -639,6 +663,7 @@ async function initializeApp() {
       getImagePreview,
       processingHelper: state.processingHelper,
       yenHelper: state.yenHelper,
+      listenHelper: state.listenHelper,
       PROCESSING_EVENTS: state.PROCESSING_EVENTS,
       takeScreenshot,
       getView,

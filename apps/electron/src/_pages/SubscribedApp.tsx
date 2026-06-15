@@ -5,6 +5,7 @@ import Queue from "../_pages/Queue"
 import Solutions from "../_pages/Solutions"
 import { useToast } from "../contexts/toast"
 import { YenView } from "../components/Yen/YenView"
+import { ListenView } from "../components/Listen/ListenView"
 
 interface SubscribedAppProps {
   credits: number
@@ -168,6 +169,7 @@ const SubscribedApp: React.FC<SubscribedAppProps> = ({
         />
       ) : null}
       <YenView />
+      <ListenView />
     </div>
   )
 }
