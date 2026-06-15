@@ -1,5 +1,4 @@
 import SubscribedApp from "./_pages/SubscribedApp"
-import SubscribePage from "./_pages/SubscribePage"
 import { UpdateNotification } from "./components/UpdateNotification"
 import {
   QueryClient,
@@ -433,18 +432,16 @@ function App() {
       <ToastProvider>
         <ToastContext.Provider value={{ showToast }}>
           <div>
-            {/* ── Auth gate ──────────────────────────────────────── */}
-            {authState.status === 'checking' || !isInitialized ? (
+            {/* ── Boot gate (paywall is only triggered on real solve quota hit,
+                 handled by ProcessingHelper at the moment of a solve) ──────── */}
+            {!isInitialized ? (
               <div className="answer-card">
                 <div className="answer-card__loading">Loading BigO…</div>
               </div>
-            ) : authState.status === 'no_subscription' ? (
-              /* Quota hit → show paywall */
-              <SubscribePage
-                user={{ id: '', email: authState.email || '' } as any}
-              />
             ) : (
-              /* Free tier / active subscription → normal app */
+              /* Free tier / active subscription / bigo-free → normal app.
+                 The paywall lives in SubscribedApp now; when a solve attempt
+                 returns blocked:true, that flow surfaces the upgrade prompt. */
               hasApiKey ? (
                 <SubscribedApp
                   credits={credits}

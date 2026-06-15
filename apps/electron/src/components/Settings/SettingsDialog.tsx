@@ -268,6 +268,10 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     window.electronAPI.setWindowFocusable(newOpen);
+    // While Settings is open, force the window to accept clicks/typing.
+    // The click-through layer can leave the API-Key input unable to receive
+    // paste/typing events otherwise. Reset to default on close.
+    window.electronAPI.setIgnoreMouseEvents?.(!newOpen);
     if (onOpenChange && newOpen !== externalOpen) {
       onOpenChange(newOpen);
     }
